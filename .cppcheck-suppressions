@@ -1,0 +1,14 @@
+# Cppcheck suppressions (build-time list; CMake passes this file).
+# The .cppcheck GUI project mirrors the two global ids below.
+#
+# Only add suppressions after reviewing the diagnostic
+# and confirming that it is a false positive or intentional.
+
+# System headers (libc++, GoogleTest) are not a project defect.
+missingIncludeSystem
+
+# A suppression with no current match should not fail the run.
+unmatchedSuppression
+
+# Example:
+# someCheckId:engine/src/SomeFile.cpp

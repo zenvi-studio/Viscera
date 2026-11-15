@@ -1,0 +1,200 @@
+{
+  "version": 10,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "VISCERA_WARNINGS_AS_ERRORS": "ON",
+        "VISCERA_CLANG_TIDY": "OFF",
+        "VISCERA_CPPCHECK": "OFF"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug (Clang)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/cmake-build-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release (Clang)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/cmake-build-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "debug-gcc",
+      "displayName": "Debug (GCC)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/cmake-build-debug-gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "release-gcc",
+      "displayName": "Release (GCC)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/cmake-build-release-gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "debug-msvc",
+      "displayName": "Debug (MSVC)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/cmake-build-debug-msvc",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      }
+    },
+    {
+      "name": "release-msvc",
+      "displayName": "Release (MSVC)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/cmake-build-release-msvc",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      }
+    },
+    {
+      "name": "debug-clang-tidy",
+      "displayName": "Debug with clang-tidy",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/cmake-build-clang-tidy",
+      "cacheVariables": {
+        "VISCERA_CLANG_TIDY": "ON"
+      }
+    },
+    {
+      "name": "debug-cppcheck",
+      "displayName": "Debug with cppcheck",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/cmake-build-cppcheck",
+      "cacheVariables": {
+        "VISCERA_CPPCHECK": "ON"
+      }
+    },
+    {
+      "name": "debug-analysis",
+      "displayName": "Debug with clang-tidy & cppcheck",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/cmake-build-analysis",
+      "cacheVariables": {
+        "VISCERA_CLANG_TIDY": "ON",
+        "VISCERA_CPPCHECK": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "debug-gcc",
+      "configurePreset": "debug-gcc"
+    },
+    {
+      "name": "release-gcc",
+      "configurePreset": "release-gcc"
+    },
+    {
+      "name": "debug-msvc",
+      "configurePreset": "debug-msvc",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "release-msvc",
+      "configurePreset": "release-msvc",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "debug-clang-tidy",
+      "configurePreset": "debug-clang-tidy"
+    },
+    {
+      "name": "debug-cppcheck",
+      "configurePreset": "debug-cppcheck"
+    },
+    {
+      "name": "debug-analysis",
+      "configurePreset": "debug-analysis"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "debug-gcc",
+      "configurePreset": "debug-gcc",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "debug-msvc",
+      "configurePreset": "debug-msvc",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+@startuml cmake-targets
+title Viscera CMake targets (foundation)
+
+skinparam componentStyle rectangle
+
+component "VisceraGame\n(executable)" as Game
+component "VisceraEngine\n(static library)\nalias: Viscera::Engine" as Engine
+component "VisceraEngineTests" as Tests
+component "Viscera::Warnings\n(INTERFACE)" as Warnings
+
+Game --> Engine : PRIVATE link
+Tests --> Engine : PRIVATE link
+Game ..> Warnings : PRIVATE link
+Engine ..> Warnings : PRIVATE link
+Tests ..> Warnings : PRIVATE link
+
+note right of Engine
+  Public headers: engine/include/viscera/
+  Generated: Version.hpp (FILE_SET)
+end note
+
+note bottom of Warnings
+  clang-tidy and cppcheck are configure-time
+  tools (CMAKE_CXX_CLANG_TIDY / CMAKE_CXX_CPPCHECK),
+  not link targets.
+  VisceraCppcheck exists only when
+  VISCERA_CPPCHECK is ON.
+end note
+
+@enduml

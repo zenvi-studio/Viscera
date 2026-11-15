@@ -1,0 +1,24 @@
+@startuml module-boundaries
+title Engine vs game source boundaries
+
+skinparam packageStyle rectangle
+
+package "engine/" as eng {
+  folder "include/viscera/" as API <<public API>>
+  folder "src/" as EngSrc <<implementation>>
+  folder "tests/" as EngTests
+}
+
+package "game/" as gme {
+  folder "src/" as GameSrc <<entry + gameplay>>
+}
+
+GameSrc --> API : include / link\nViscera::Engine
+EngTests --> API : tests only
+EngSrc -[hidden]-> API
+
+note bottom of eng
+  Engine MUST NOT depend on game/
+end note
+
+@enduml

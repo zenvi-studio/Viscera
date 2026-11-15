@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="1">
+    <builddir>cmake-build-cppcheck/cache</builddir>
+    <analyze-all-vs-configs>false</analyze-all-vs-configs>
+    <check-headers>true</check-headers>
+    <check-unused-templates>false</check-unused-templates>
+    <max-ctu-depth>2</max-ctu-depth>
+    <max-template-recursion>100</max-template-recursion>
+    <inline-suppression>true</inline-suppression>
+    <paths>
+        <dir name="engine"/>
+        <dir name="game"/>
+    </paths>
+    <!-- Same global ids as .cppcheck-suppressions, which CMake passes at build time. -->
+    <suppressions>
+        <suppression>missingIncludeSystem</suppression>
+        <suppression>unmatchedSuppression</suppression>
+    </suppressions>
+</project>
