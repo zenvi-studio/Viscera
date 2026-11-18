@@ -6,66 +6,56 @@ how to clone, build, and run; this tree explains **why** the project is structur
 ## Layout
 
 Documentation is grouped by **module**, mirroring major code boundaries. Each module can hold ADRs, diagrams, and
-guides in one place.
+guides in one place. Nested paths under `engine/` (and later `game/`) group feature-specific design.
 
-| Path                         | Scope                                                                             |
-|------------------------------|-----------------------------------------------------------------------------------|
-| [`foundation/`](foundation/) | Cross-cutting decisions and guides: language, toolchain, CMake, how we write code |
-| `engine/`                    | *(planned)* Runtime engine features — rendering, input, assets, etc.              |
-| `game/`                      | *(planned)* Gameplay, content, and game-only concerns                             |
+| Path                                 | Scope                                                                             |
+|--------------------------------------|-----------------------------------------------------------------------------------|
+| [`foundation/`](foundation/)         | Cross-cutting decisions and guides: language, toolchain, CMake, how we write code |
+| [`engine/logging/`](engine/logging/) | Engine **logging** subsystem — architecture, API, queues, sinks, shutdown         |
+| `engine/` *(other features)*         | Additional runtime features as they gain ADRs (rendering, input, assets, …)       |
+| `game/` *(planned)*                  | Gameplay, content, and game-only concerns                                         |
+| [`templates/`](templates/)           | Shared authoring templates (e.g. ADR skeleton)                                    |
 
-Only **foundation** exists today. Add `engine/` and `game/` under `docs/` when the first feature-specific ADRs appear.
+**Module indexes** (full ADR lists and summaries):
+
+- [Foundation](foundation/README.md)
+- [Engine — logging](engine/logging/README.md)
 
 ## Architecture decision records (ADRs)
 
-We use [Michael Nygard’s ADR format](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions).
+We use [Michael Nygard’s ADR format](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions), extended
+for feature modules where useful.
 
-- **Location:** `docs/<module>/adr/`
+- **Location:** `docs/<module>/adr/`, or nested such as `docs/engine/<feature>/adr/`
 - **Naming:** `ADR-NNN-short-title.md` (three-digit index, kebab-case slug)
-- **Numbering:** Global sequence across the repo. Foundation owns **ADR-001–ADR-007**; the next new decision is
-  **ADR-008** (whichever module it belongs to).
+- **Numbering:** **Per module** — each folder owns its own `ADR-001`, `ADR-002`, … sequence. Foundation decisions stay
+  under `foundation/adr/`; logging decisions stay under `engine/logging/adr/`. When adding a decision, use the next free
+  number in that folder only.
 - **Status values:** Proposed → Accepted → Deprecated / Superseded (link to the replacing ADR)
 
 ### Template
 
-```markdown
-# ADR-NNN: Title
-
-- **Status:** Accepted
-- **Date:** YYYY-MM-DD
-
-## Context
-
-What problem or constraint motivates a decision?
-
-## Decision
-
-What we chose.
-
-## Consequences
-
-Positive, negative, and follow-up work.
-```
+Copy [`templates/ADR.md`](templates/ADR.md) when starting a new ADR (metadata table, alternatives, consequences).
+Older foundation ADRs use a shorter heading style; new work should follow the template.
 
 ### Foundation ADRs (accepted)
 
-| ID      | Title                              | File                                                                                                  |
-|---------|------------------------------------|-------------------------------------------------------------------------------------------------------|
-| ADR-001 | Use C++23                          | [ADR-001-use-cpp23.md](foundation/adr/ADR-001-use-cpp23.md)                                           |
-| ADR-002 | Clang, GCC, and MSVC               | [ADR-002-clang-gcc-msvc.md](foundation/adr/ADR-002-clang-gcc-msvc.md)                                 |
-| ADR-003 | CMake project layout               | [ADR-003-cmake-project-layout.md](foundation/adr/ADR-003-cmake-project-layout.md)                     |
-| ADR-004 | Engine vs game split               | [ADR-004-engine-vs-game-split.md](foundation/adr/ADR-004-engine-vs-game-split.md)                     |
-| ADR-005 | Dependency management strategy     | [ADR-005-dependency-management-strategy.md](foundation/adr/ADR-005-dependency-management-strategy.md) |
-| ADR-006 | Warnings, clang-tidy, and cppcheck | [ADR-006-warnings-and-static-analysis.md](foundation/adr/ADR-006-warnings-and-static-analysis.md)     |
-| ADR-007 | Cross-platform text policy         | [ADR-007-cross-platform-text-policy.md](foundation/adr/ADR-007-cross-platform-text-policy.md)         |
+Summaries and links: [foundation/README.md](foundation/README.md#adrs). Current set: **ADR-001** through **ADR-007**
+(C++23, compilers, CMake layout, engine vs game, dependencies, static analysis, text policy). Next foundation index:
+**ADR-008**.
+
+### Engine — logging ADRs
+
+Summaries and links: [engine/logging/README.md](engine/logging/README.md#adrs). Current set: **ADR-001** through
+**ADR-016** (accepted; async architecture through testing and benchmarking).
 
 ## Guides
 
 Handbooks that are not ADRs — how to write code, rather than a single recorded decision.
 
-| Guide               | File                                                                                       |
-|---------------------|--------------------------------------------------------------------------------------------|
-| Coding conventions  | [foundation/guides/coding-conventions.md](foundation/guides/coding-conventions.md)         |
+| Guide              | File                                                                               |
+|--------------------|------------------------------------------------------------------------------------|
+| Coding conventions | [foundation/guides/coding-conventions.md](foundation/guides/coding-conventions.md) |
 
 ## Diagrams
 
