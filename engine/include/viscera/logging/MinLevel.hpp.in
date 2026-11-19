@@ -1,0 +1,7 @@
+#pragma once
+
+#ifndef VISCERA_LOG_MIN_LEVEL
+    // clang-format off
+    #define VISCERA_LOG_MIN_LEVEL @VISCERA_LOG_MIN_LEVEL_VALUE@
+    // clang-format on
+#endif
