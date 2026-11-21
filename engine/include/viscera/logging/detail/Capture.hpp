@@ -253,6 +253,52 @@ namespace viscera::logging::detail
         }
     }
 
+    [[nodiscard]] constexpr bool measureArgsFrom(std::size_t) noexcept
+    {
+        return true;
+    }
+
+    template <typename T, typename ...Rest>
+    [[nodiscard]] bool measureArgsFrom(std::size_t offset, const T &value, const Rest & ...rest) noexcept
+    {
+        if (!measureArg(offset, value))
+        {
+            return false;
+        }
+
+        return measureArgsFrom(offset, rest ...);
+    }
+
+    template <typename ...Args>
+    [[nodiscard]] bool measureArgs(const Args & ...args) noexcept
+    {
+        return measureArgsFrom(0, args ...);
+    }
+
+    [[nodiscard]] constexpr bool storeArgsFrom(std::byte *, std::size_t) noexcept
+    {
+        return true;
+    }
+
+    template <typename T, typename ...Rest>
+    [[nodiscard]] bool storeArgsFrom(std::byte * const payload, std::size_t offset, T && value, Rest && ...rest)
+    noexcept
+    {
+        if (!storeArg(payload, offset, std::forward<T>(value)))
+        {
+            return false;
+        }
+
+        return storeArgsFrom(payload, offset, std::forward<Rest>(rest)...);
+    }
+
+    template <typename ...Args>
+    [[nodiscard]] bool storeArgs(std::byte * const payload, Args && ...args)
+    noexcept
+    {
+        return storeArgsFrom(payload, 0, std::forward<Args>(args)...);
+    }
+
     template <typename Stored, typename Formatted>
     [[nodiscard]] Formatted loadArg(const std::byte *const payload, std::size_t &offset) noexcept
     {
@@ -360,55 +406,60 @@ namespace viscera::logging::detail
             (fmt::is_formattable < typename ArgTraits<Args>::Formatted > ::value &&  ...),
         "logged argument is not formattable");
 
-        if constexpr (sizeof...(Args) > 0)
+        const auto formatView = format.get();
+        const auto takeSlot = [&] noexcept
         {
-            std::size_t measured = 0; // cppcheck-suppress unreadVariable
-            if (!(measureArg(measured, args) && ...))
+            return acquireLogSlot(
+                level,
+                category,
+                timestampNs,
+                threadId,
+                frame,
+                location.file_name(),
+                location.function_name(),
+                location.line(),
+                std::string_view{formatView.data(), formatView.size()},
+                consoleWritten
+            );
+        };
+
+        if constexpr (sizeof...(Args) == 0)
+        {
+            if (takeSlot() == nullptr)
             {
-                countArgumentBudget();
                 return;
             }
+
+            commitLogSlot(&formatThunk<Args ...>, nullptr);
+            return;
         }
 
-        const auto formatView = format.get();
-        // Empty argument packs never write through this pointer; non-empty packs do.
-        // NOLINTNEXTLINE(misc-const-correctness)
-        Record *const record = acquireLogSlot(
-            level,
-            category,
-            timestampNs,
-            threadId,
-            frame,
-            location.file_name(),
-            location.function_name(),
-            location.line(),
-            std::string_view{formatView.data(), formatView.size()},
-            consoleWritten
-        );
+        if (!measureArgs(args ...))
+        {
+            countArgumentBudget();
+            return;
+        }
+
+        Record *const record = takeSlot();
         if (record == nullptr)
         {
             return;
         }
 
-        if constexpr (sizeof...(Args) > 0)
+        if (!storeArgs(record->payload.data(), std::forward<Args>(args) ...))
         {
-            std::size_t offset = 0; // cppcheck-suppress unreadVariable
-            if (!(storeArg(record->payload.data(), offset, std::forward<Args>(args)) && ...))
+            if constexpr (!(std::is_trivially_destructible_v < typename ArgTraits<Args>::Stored > && ...))
             {
-                if constexpr (!(std::is_trivially_destructible_v < typename ArgTraits<Args>::Stored > && ...))
-                {
-                    std::size_t destroyOffset = 0;
-                    destroyPack<Args ...>(record->payload.data(), destroyOffset);
-                }
-
-                countArgumentBudget();
-                abortLogSlot();
-                return;
+                std::size_t destroyOffset = 0;
+                destroyPack<Args ...>(record->payload.data(), destroyOffset);
             }
+
+            countArgumentBudget();
+            abortLogSlot();
+            return;
         }
 
-        constexpr bool kTrivialDestroy =
-            sizeof...(Args) == 0 || (std::is_trivially_destructible_v < typename ArgTraits<Args>::Stored > && ...);
+        constexpr bool kTrivialDestroy = (std::is_trivially_destructible_v < typename ArgTraits<Args>::Stored > && ...);
 
         commitLogSlot(&formatThunk<Args ...>, kTrivialDestroy ? nullptr : &destroyThunk<Args ...>);
     }

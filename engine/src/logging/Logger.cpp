@@ -28,14 +28,16 @@ namespace viscera::logging
 {
     namespace
     {
-        // Test seam: LoggerTests disable contract asserts so not-running calls do not abort.
-        // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
-        std::atomic<bool> contractAssertsEnabled{true};
+        [[nodiscard]] std::atomic<bool> &contractAssertsFlag() noexcept
+        {
+            static std::atomic<bool> enabled{true};
+            return enabled;
+        }
 
         void contractAssert(const bool condition, const char *const message) noexcept
         {
             #ifndef NDEBUG
-            if (!condition && contractAssertsEnabled.load(std::memory_order_relaxed))
+            if (!condition && contractAssertsFlag().load(std::memory_order_relaxed))
             {
                 assert(condition && message);
             }
@@ -802,9 +804,9 @@ namespace viscera::logging
                 {
                     state->sink->flush();
                 }
-                catch (...) // NOLINT(bugprone-empty-catch)
+                catch (...)
                 {
-                    // Flush is best-effort so shutdown can stay noexcept.
+                    state->writeFailures.fetch_add(1, std::memory_order_relaxed);
                 }
             }
         }
@@ -925,7 +927,7 @@ namespace viscera::logging
     {
         void setContractAssertsEnabled(const bool enabled) noexcept
         {
-            contractAssertsEnabled.store(enabled, std::memory_order_relaxed);
+            contractAssertsFlag().store(enabled, std::memory_order_relaxed);
         }
 
         bool loggerRunning() noexcept

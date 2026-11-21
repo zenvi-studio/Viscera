@@ -1,19 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Cppcheck GUI project only. CMake does not load this file.
+  VisceraCppcheck uses ${binaryDir}/compile_commands.json so analysis presets
+  are not pinned to cmake-build-debug. This import is for GUI users on the
+  default debug profile. Do not check headers as standalone TUs.
+-->
 <project version="1">
-    <builddir>cmake-build-cppcheck/cache</builddir>
+    <builddir>cmake-build-debug/cppcheck-cache</builddir>
+    <importproject>cmake-build-debug/compile_commands.json</importproject>
     <analyze-all-vs-configs>false</analyze-all-vs-configs>
-    <check-headers>true</check-headers>
+    <check-headers>false</check-headers>
     <check-unused-templates>false</check-unused-templates>
     <max-ctu-depth>2</max-ctu-depth>
     <max-template-recursion>100</max-template-recursion>
     <inline-suppression>true</inline-suppression>
-    <paths>
-        <dir name="engine"/>
-        <dir name="game"/>
-    </paths>
-    <!-- Same global ids as .cppcheck-suppressions, which CMake passes at build time. -->
+    <exclude>
+        <path name="cmake-build-debug/_deps/"/>
+    </exclude>
     <suppressions>
         <suppression>missingIncludeSystem</suppression>
         <suppression>unmatchedSuppression</suppression>
+        <suppression>noExplicitConstructor:engine/include/viscera/logging/FormatString.hpp</suppression>
     </suppressions>
 </project>

@@ -98,7 +98,9 @@ if (VISCERA_CPPCHECK)
     find_program(CPPCHECK_EXECUTABLE NAMES cppcheck)
 
     if (CPPCHECK_EXECUTABLE)
-        # Build-time analysis
+        # Per compiled translation unit (CMake appends the .cpp and its -I/-D).
+        # Do not pass standalone headers; do not enable unusedFunction here
+        # (that check is whole-program only).
         set(CMAKE_CXX_CPPCHECK
                 "${CPPCHECK_EXECUTABLE}"
                 "--enable=warning,style,performance,portability"

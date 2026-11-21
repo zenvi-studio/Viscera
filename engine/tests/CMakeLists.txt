@@ -2,6 +2,7 @@ add_executable(VisceraEngineTests
         src/EngineTests.cpp
         src/logging/LoggerTests.cpp
         compile/log_format_ok.cpp
+        compile/log_format_ok.hpp
 )
 
 target_link_libraries(VisceraEngineTests
@@ -9,6 +10,11 @@ target_link_libraries(VisceraEngineTests
         Viscera::Engine
         Viscera::Warnings
         GTest::gtest_main
+)
+
+target_include_directories(VisceraEngineTests
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/compile
 )
 
 set_target_properties(VisceraEngineTests PROPERTIES FOLDER "Tests")

@@ -18,7 +18,7 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
-void visceraLogFormatControl();
+#include "log_format_ok.hpp"
 
 using viscera::logging::Category;
 using viscera::logging::clearCategoryMinLevel;
@@ -152,10 +152,9 @@ struct fmt::formatter<ThrowOnFormat>
 {
     static constexpr auto parse(const format_parse_context &ctx) { return ctx.begin(); }
 
-    static auto format(const ThrowOnFormat &, format_context &ctx)
+    [[noreturn]] static format_context::iterator format(const ThrowOnFormat &, format_context &)
     {
         throw std::runtime_error("formatter boom");
-        return ctx.out(); // cppcheck-suppress duplicateBreak
     }
 };
 

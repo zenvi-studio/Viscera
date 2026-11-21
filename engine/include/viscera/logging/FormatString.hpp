@@ -13,7 +13,6 @@ namespace viscera::logging
         std::source_location location;
 
         template <typename S>
-        // cppcheck-suppress noExplicitConstructor
         // NOLINTNEXTLINE(cppcoreguidelines-explicit-constructor, misc-explicit-constructor)
         consteval FormatString(const S &s, const std::source_location loc = std::source_location::current()) :
             format(s),

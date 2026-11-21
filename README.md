@@ -14,16 +14,16 @@ assets, and game logic in a structure that stays easy to extend.
 
 ## Tech Stack
 
-| Layer           | Technology              | Version / notes                        | Source                                                    |
-|-----------------|-------------------------|----------------------------------------|-----------------------------------------------------------|
-| Language        | C++                     | C++23 (`cxx_std_23`)                   | Root `CMakeLists.txt`, `engine/CMakeLists.txt`            |
-| Build           | CMake                   | 3.28 or newer (policies through 4.4.5) | `CMakeLists.txt`, `CMakePresets.json`                     |
-| Generator       | Ninja                   | Preset default                         | `CMakePresets.json`                                       |
-| Compiler        | **Clang, GCC, or MSVC** | `clang++`, `g++`, or `cl`              | `cmake/CompilerWarnings.cmake`, presets                   |
-| Tests           | GoogleTest              | v1.18.0 (FetchContent)                 | `cmake/Dependencies.cmake`                                |
-| Static analysis | clang-tidy              | Optional at build time                 | `.clang-tidy`, `VISCERA_CLANG_TIDY`                       |
-| Static analysis | cppcheck                | Optional at build time                 | `.cppcheck`, `.cppcheck-suppressions`, `VISCERA_CPPCHECK` |
-| Formatting      | clang-format            | Project `.clang-format`                | `.clang-format`                                           |
+| Layer           | Technology              | Version / notes                        | Source                                                                |
+|-----------------|-------------------------|----------------------------------------|-----------------------------------------------------------------------|
+| Language        | C++                     | C++23 (`cxx_std_23`)                   | Root `CMakeLists.txt`, `engine/CMakeLists.txt`                        |
+| Build           | CMake                   | 3.28 or newer (policies through 4.4.5) | `CMakeLists.txt`, `CMakePresets.json`                                 |
+| Generator       | Ninja                   | Preset default                         | `CMakePresets.json`                                                   |
+| Compiler        | **Clang, GCC, or MSVC** | `clang++`, `g++`, or `cl`              | `cmake/CompilerWarnings.cmake`, presets                               |
+| Tests           | GoogleTest              | v1.18.0 (FetchContent)                 | `cmake/Dependencies.cmake`                                            |
+| Static analysis | clang-tidy              | Optional at build time                 | `.clang-tidy`, `VISCERA_CLANG_TIDY`                                   |
+| Static analysis | cppcheck                | Optional at build time                 | `.cppcheck-suppressions`, `VISCERA_CPPCHECK`; `.cppcheck` is GUI-only |
+| Formatting      | clang-format            | Project `.clang-format`                | `.clang-format`                                                       |
 
 Supported compilers are **Clang** (including AppleClang), **GCC** (`g++`), and **MSVC** (`cl`). Configuration fails
 if CMake reports another compiler id, including **clang-cl**. The check lives in
@@ -54,7 +54,7 @@ flowchart LR
 | `game/`             | Game target that links `Viscera::Engine`                                           |
 | `engine/tests/`     | GoogleTest suite for the engine (top-level builds only)                            |
 | `cmake/`            | Shared CMake modules (`Dependencies.cmake`, `CompilerWarnings.cmake`)              |
-| `CMakePresets.json` | Debug / Release presets for Clang, GCC, and MSVC, plus clang-tidy and cppcheck    |
+| `CMakePresets.json` | Debug / Release presets for Clang, GCC, and MSVC, plus clang-tidy and cppcheck     |
 
 Build outputs (binaries) are written under `<build-dir>/bin/` (for example `cmake-build-debug/bin/VisceraGame`).
 
@@ -98,8 +98,12 @@ GoogleTest. MSVC presets still need Visual Studio's `cl` on `PATH`.
   `debug-clang-tidy` and `debug-analysis` presets enable it on the Clang `debug` build. With GCC or MSVC,
   `-DVISCERA_CLANG_TIDY=ON` warns at configure and skips the tool.
 - **cppcheck** — Included in the WinLibs archive **with LLVM/Clang/LLD/LLDB**. Enable via the `debug-cppcheck` or
-  `debug-analysis` preset, or `-DVISCERA_CPPCHECK=ON`.
+  `debug-analysis` preset, or `-DVISCERA_CPPCHECK=ON`. CMake runs cppcheck on compiled translation units. The
+  `.cppcheck` file is only for the Cppcheck GUI; it is not the CLion or CMake gate.
 - **CLion** — The repo includes `.idea/` metadata; opening the folder and using CMake presets matches local workflow.
+  On-the-fly Cppcheck is disabled in the project inspection profile because it does not use `compile_commands.json`.
+  Use `debug-analysis` or the `VisceraCppcheck` target. A yellow underline whose tooltip starts with `Cppcheck:` is
+  the IDE plugin; `Class is never used` is a CLion inspection, not cppcheck.
 
 ## Getting Started
 
@@ -192,9 +196,9 @@ CMake options and cache variables used in this repo:
 | Variable                                  | Default                         | Description                                                                                                                                                            |
 |-------------------------------------------|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `CMAKE_BUILD_TYPE`                        | Preset: `Debug` or `Release`    | Standard CMake build type                                                                                                                                              |
-| `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` | Clang in `debug` / `release` | `clang++`, `g++`, or `cl`. Other ids, including clang-cl, fail configure                                                          |
+| `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` | Clang in `debug` / `release`    | `clang++`, `g++`, or `cl`. Other ids, including clang-cl, fail configure                                                                                               |
 | `VISCERA_WARNINGS_AS_ERRORS`              | `OFF` in CMake; `ON` in presets | Compiler warnings fail the build (`CMAKE_COMPILE_WARNING_AS_ERROR`). Also passes `--warnings-as-errors=*` to clang-tidy and `--error-exitcode=1` to per-file cppcheck. |
-| `VISCERA_CLANG_TIDY`                      | `OFF`                           | Run clang-tidy on Clang compilations via `CMAKE_CXX_CLANG_TIDY`. GCC and MSVC skip it with a warning                                                              |
+| `VISCERA_CLANG_TIDY`                      | `OFF`                           | Run clang-tidy on Clang compilations via `CMAKE_CXX_CLANG_TIDY`. GCC and MSVC skip it with a warning                                                                   |
 | `VISCERA_CPPCHECK`                        | `OFF`                           | Run cppcheck on every compilation via `CMAKE_CXX_CPPCHECK`, and add the `VisceraCppcheck` target                                                                       |
 | `BUILD_TESTING`                           | CTest default when top-level    | Fetches GoogleTest and builds `VisceraEngineTests`                                                                                                                     |
 
@@ -280,13 +284,14 @@ heading in [`CHANGELOG.md`](CHANGELOG.md) the same.
 
 ## Troubleshooting
 
-| Issue                                                 | What to check                                                                                                      |
-|-------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| `Unsupported compiler` or `clang-cl is not supported` | Use Clang (`clang++`), GCC (`g++`), or MSVC (`cl`). A preset sets the compiler for you.                           |
-| `'cl' is not recognized`                              | Open an x64 Native Tools or Developer PowerShell for Visual Studio, then configure `debug-msvc` or `release-msvc`. |
-| Tests fail to fetch                                   | Network access for GitHub (`googletest` FetchContent) and Git installed.                                           |
-| `clang-tidy` or `cppcheck` was not found              | Configure warns and continues. Install the tool, or leave `VISCERA_CLANG_TIDY` / `VISCERA_CPPCHECK` OFF.           |
-| Wrong compiler in CLion                               | Settings → Build → CMake → select the preset for Clang, GCC, or MSVC.                                              |
+| Issue                                                 | What to check                                                                                                                                                                  |
+|-------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Unsupported compiler` or `clang-cl is not supported` | Use Clang (`clang++`), GCC (`g++`), or MSVC (`cl`). A preset sets the compiler for you.                                                                                        |
+| `'cl' is not recognized`                              | Open an x64 Native Tools or Developer PowerShell for Visual Studio, then configure `debug-msvc` or `release-msvc`.                                                             |
+| Tests fail to fetch                                   | Network access for GitHub (`googletest` FetchContent) and Git installed.                                                                                                       |
+| `clang-tidy` or `cppcheck` was not found              | Configure warns and continues. Install the tool, or leave `VISCERA_CLANG_TIDY` / `VISCERA_CPPCHECK` OFF.                                                                       |
+| Wrong compiler in CLion                               | Settings → Build → CMake → select the preset for Clang, GCC, or MSVC.                                                                                                          |
+| CLion yellow `unused` underlines, `analysis` is clean | Those marks are the on-the-fly Cppcheck plugin (disabled in this repo’s inspection profile). Hover: `Cppcheck:` vs `never used`. Rebuild `debug-analysis` for the real report. |
 
 ## Documentation
 

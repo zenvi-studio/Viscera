@@ -96,7 +96,7 @@ namespace viscera::logging::detail
         try
         {
             const auto file = shortFile(location.file_name(), sourceRoot);
-            const auto prefix = fmt::format_to_n(
+            const auto [out, size] = fmt::format_to_n(
                 buffer,
                 capacity,
                 "[{:.3f}][{}][{}][{}][{}][{}:{}] ",
@@ -109,8 +109,8 @@ namespace viscera::logging::detail
                 location.line()
             );
 
-            std::size_t used = std::min(prefix.size, capacity);
-            bool truncated = prefix.size > capacity;
+            std::size_t used = std::min(size, capacity);
+            bool truncated = size > capacity;
 
             if (used < capacity)
             {

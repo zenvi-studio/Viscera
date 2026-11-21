@@ -21,9 +21,9 @@ Feature-level design (rendering, weapons, AI, etc.) belongs in future `docs/engi
 
 ### Guides
 
-| File                                                     | Summary                                                                              |
-|----------------------------------------------------------|--------------------------------------------------------------------------------------|
-| [coding-conventions.md](guides/coding-conventions.md)    | SOLID, simplicity, modularity, and C++ resource rules, with prefer/avoid examples    |
+| File                                                  | Summary                                                                           |
+|-------------------------------------------------------|-----------------------------------------------------------------------------------|
+| [coding-conventions.md](guides/coding-conventions.md) | SOLID, simplicity, modularity, and C++ resource rules, with prefer/avoid examples |
 
 ### Diagrams
 
@@ -34,15 +34,15 @@ Feature-level design (rendering, weapons, AI, etc.) belongs in future `docs/engi
 
 ## Related code
 
-| Concern                                                        | Location                                                                                 |
-|----------------------------------------------------------------|------------------------------------------------------------------------------------------|
-| C++ standard / project options                                 | Root [`CMakeLists.txt`](../../CMakeLists.txt)                                            |
-| Presets (Clang, GCC, MSVC, warnings-as-errors, tidy, cppcheck) | [`CMakePresets.json`](../../CMakePresets.json)                                           |
-| Warnings target and analyzer hooks                             | [`cmake/CompilerWarnings.cmake`](../../cmake/CompilerWarnings.cmake)                     |
-| Third-party fetch                                              | [`cmake/Dependencies.cmake`](../../cmake/Dependencies.cmake)                             |
-| clang-tidy config                                              | [`.clang-tidy`](../../.clang-tidy)                                                       |
-| cppcheck GUI project and suppressions                          | [`.cppcheck`](../../.cppcheck), [`.cppcheck-suppressions`](../../.cppcheck-suppressions) |
-| Line endings                                                   | [`.gitattributes`](../../.gitattributes), [`.editorconfig`](../../.editorconfig)         |
+| Concern                                                        | Location                                                                                                                                |
+|----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| C++ standard / project options                                 | Root [`CMakeLists.txt`](../../CMakeLists.txt)                                                                                           |
+| Presets (Clang, GCC, MSVC, warnings-as-errors, tidy, cppcheck) | [`CMakePresets.json`](../../CMakePresets.json)                                                                                          |
+| Warnings target and analyzer hooks                             | [`cmake/CompilerWarnings.cmake`](../../cmake/CompilerWarnings.cmake)                                                                    |
+| Third-party fetch                                              | [`cmake/Dependencies.cmake`](../../cmake/Dependencies.cmake)                                                                            |
+| clang-tidy config                                              | [`.clang-tidy`](../../.clang-tidy)                                                                                                      |
+| cppcheck GUI project and suppressions                          | [`.cppcheck`](../../.cppcheck) (GUI only; CMake uses `compile_commands.json`), [`.cppcheck-suppressions`](../../.cppcheck-suppressions) |
+| Line endings                                                   | [`.gitattributes`](../../.gitattributes), [`.editorconfig`](../../.editorconfig)                                                        |
 
 When you change any of the above in a meaningful way, update the matching ADR or add a new one (next index:
 **ADR-008**). The [coding conventions](guides/coding-conventions.md) guide is not an ADR; edit it in place when the

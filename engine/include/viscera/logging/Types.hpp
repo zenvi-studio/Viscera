@@ -17,7 +17,6 @@ namespace viscera::logging
     };
 
     // Bitmask width is required by ADR-007 even though only six named bits exist today.
-    // NOLINTNEXTLINE(performance-enum-size)
     enum class Category : std::uint64_t
     {
         Core   = 1ULL << 0U,

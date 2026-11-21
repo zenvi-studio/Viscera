@@ -1,7 +1,7 @@
+#include "log_format_ok.hpp"
+
 #include <viscera/logging/Logger.hpp>
 
-// Linked from LoggerTests to prove convenience signatures compile; must stay external.
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 void visceraLogFormatControl()
 {
     using viscera::logging::Category;
