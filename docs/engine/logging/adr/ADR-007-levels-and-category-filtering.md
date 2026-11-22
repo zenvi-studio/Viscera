@@ -1,4 +1,4 @@
-# ADR-007: Levels and category filtering
+# ADR-007: Levels and category filtering {#adr_log_007}
 
 | Field        | Value                                                             |
 |--------------|-------------------------------------------------------------------|

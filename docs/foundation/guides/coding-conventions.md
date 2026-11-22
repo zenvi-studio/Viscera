@@ -1,4 +1,4 @@
-# Coding conventions
+# Coding conventions {#foundation_conventions}
 
 How Viscera code should be *shaped*: what belongs in a type, how modules talk to each other, and how C++ resources
 are owned. This is a handbook, not an ADR. Toolchain and layout decisions stay in

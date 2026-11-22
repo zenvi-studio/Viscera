@@ -1,4 +1,4 @@
-# ADR-003: No-throw error handling in logging calls
+# ADR-003: No-throw error handling in logging calls {#adr_log_003}
 
 | Field        | Value                                                                      |
 |--------------|----------------------------------------------------------------------------|

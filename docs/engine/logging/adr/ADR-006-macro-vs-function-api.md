@@ -1,4 +1,4 @@
-# ADR-006: Macro versus function API
+# ADR-006: Macro versus function API {#adr_log_006}
 
 | Field        | Value                                                                      |
 |--------------|----------------------------------------------------------------------------|

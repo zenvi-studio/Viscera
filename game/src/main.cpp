@@ -7,6 +7,7 @@ int main()
 {
     viscera::logging::Config config;
     config.sinks.push_back(std::make_unique<viscera::logging::ConsoleSink>());
+    config.sinks.push_back(std::make_unique<viscera::logging::FileSink>("latest.log"));
     if (!viscera::logging::initialize(std::move(config)))
     {
         return 1;

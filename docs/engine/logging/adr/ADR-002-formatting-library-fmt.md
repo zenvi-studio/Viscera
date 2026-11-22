@@ -1,3 +1,5 @@
+@page adr_log_002 ADR-002: Formatting library: fmt vs std::format
+
 # ADR-002: Formatting library: `{fmt}` vs `std::format`
 
 | Field        | Value                                                                     |

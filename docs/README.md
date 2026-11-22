@@ -1,4 +1,4 @@
-# Viscera documentation
+# Viscera documentation {#mainpage}
 
 Design notes and recorded decisions for the Viscera engine and game. The repo root [`README.md`](../README.md) covers
 how to clone, build, and run; this tree explains **why** the project is structured and constrained the way it is.
@@ -18,8 +18,8 @@ guides in one place. Nested paths under `engine/` (and later `game/`) group feat
 
 **Module indexes** (full ADR lists and summaries):
 
-- [Foundation](foundation/README.md)
-- [Engine — logging](engine/logging/README.md)
+- \subpage foundation_index "Foundation"
+- \subpage engine_logging_index "Engine: Logging"
 
 ## Architecture decision records (ADRs)
 

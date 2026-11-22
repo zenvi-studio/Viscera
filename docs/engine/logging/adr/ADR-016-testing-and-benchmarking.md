@@ -1,4 +1,4 @@
-# ADR-016: Testing and benchmarking
+# ADR-016: Testing and benchmarking {#adr_log_016}
 
 | Field        | Value                                                  |
 |--------------|--------------------------------------------------------|

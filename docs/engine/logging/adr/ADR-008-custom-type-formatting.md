@@ -1,4 +1,4 @@
-# ADR-008: Custom type formatting
+# ADR-008: Custom type formatting {#adr_log_008}
 
 | Field        | Value                                                                      |
 |--------------|----------------------------------------------------------------------------|

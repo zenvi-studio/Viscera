@@ -1,4 +1,4 @@
-# ADR-014: Logger lifetime and shutdown
+# ADR-014: Logger lifetime and shutdown {#adr_log_014}
 
 | Field        | Value                                                                      |
 |--------------|----------------------------------------------------------------------------|

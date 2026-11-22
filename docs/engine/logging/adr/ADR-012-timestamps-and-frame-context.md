@@ -1,4 +1,4 @@
-# ADR-012: Timestamps and frame context
+# ADR-012: Timestamps and frame context {#adr_log_012}
 
 | Field        | Value                                                                      |
 |--------------|----------------------------------------------------------------------------|

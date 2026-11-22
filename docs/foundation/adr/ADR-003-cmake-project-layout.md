@@ -1,4 +1,4 @@
-# ADR-003: CMake project layout
+# ADR-003: CMake project layout {#adr_fnd_003}
 
 - **Status:** Accepted
 - **Date:** 2026-11-13

@@ -1,4 +1,4 @@
-# ADR-001: Use C++23
+# ADR-001: Use C++23 {#adr_fnd_001}
 
 - **Status:** Accepted
 - **Date:** 2026-11-13

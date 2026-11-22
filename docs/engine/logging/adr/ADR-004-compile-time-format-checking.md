@@ -1,4 +1,4 @@
-# ADR-004: Compile-time format string checking
+# ADR-004: Compile-time format string checking {#adr_log_004}
 
 | Field        | Value                                                    |
 |--------------|----------------------------------------------------------|

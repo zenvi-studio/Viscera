@@ -1,4 +1,4 @@
-# ADR-005: Dependency management strategy
+# ADR-005: Dependency management strategy {#adr_fnd_005}
 
 - **Status:** Accepted
 - **Date:** 2026-11-13

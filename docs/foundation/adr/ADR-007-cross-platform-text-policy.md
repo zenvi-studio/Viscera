@@ -1,4 +1,4 @@
-# ADR-007: Cross-platform text policy
+# ADR-007: Cross-platform text policy {#adr_fnd_007}
 
 - **Status:** Accepted
 - **Date:** 2026-11-13

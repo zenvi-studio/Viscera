@@ -1,12 +1,10 @@
 <component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
-    <!--
-      The johnthagen Cppcheck plugin analyzes each open .hpp as an isolated TU and
-      does not use compile_commands.json. CMake CMAKE_CXX_CPPCHECK / VisceraCppcheck
-      are the project authority (ADR-006).
-    -->
-    <inspection_tool class="CppcheckInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Cppcheck" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="CppcheckInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="JSPotentiallyInvalidConstructorUsage" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myConsiderUppercaseFunctionsToBeConstructors" value="true" />
+    </inspection_tool>
   </profile>
 </component>

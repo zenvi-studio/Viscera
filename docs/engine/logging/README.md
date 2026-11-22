@@ -1,3 +1,5 @@
+@page engine_logging_index Engine: Logging
+
 # Logging module
 
 Architectural contract for `viscera::logging`. Implementation belongs under `engine/`; this page collates the public
@@ -116,21 +118,25 @@ Class and sequence diagrams are deferred until these ADRs are the implementation
 
 ## ADRs
 
-| ID                                                      | Summary                                                                                               |
-|---------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| [ADR-001](adr/ADR-001-logger-architecture.md)           | Producers enqueue unformatted records; one backend thread formats them and writes to sinks.           |
-| [ADR-002](adr/ADR-002-formatting-library-fmt.md)        | Use `{fmt}`, pinned via FetchContent, so formatting is the same on every toolchain.                   |
-| [ADR-003](adr/ADR-003-no-throw-error-handling.md)       | Logging calls are `noexcept` and return void; failures are counted inside the module.                 |
-| [ADR-004](adr/ADR-004-compile-time-format-checking.md)  | Public format strings are checked at compile time; the backend may use a runtime format path.         |
-| [ADR-005](adr/ADR-005-source-location-capture.md)       | Capture the caller with `std::source_location` in a format-string wrapper, stored as static pointers. |
-| [ADR-006](adr/ADR-006-macro-vs-function-api.md)         | The call-site API is functions that forward the format-string wrapper; macros are not required.       |
-| [ADR-007](adr/ADR-007-levels-and-category-filtering.md) | Six ordered levels and a category bitmask, filtered on the producer before any capture.               |
-| [ADR-008](adr/ADR-008-custom-type-formatting.md)        | Records own constructed arguments; one format thunk and one destroy thunk; bounded C-string copy.     |
-| [ADR-009](adr/ADR-009-queue-topology.md)                | One bounded mutex-protected MPSC ring; format from slot, then destroy/free, then I/O.                 |
-| [ADR-010](adr/ADR-010-backpressure-and-overflow.md)     | A full queue drops the new record and counts it; producers do not wait for space.                     |
-| [ADR-011](adr/ADR-011-allocation-policy.md)             | Slots are preallocated with a 256-byte inline argument buffer, so the hot path does not allocate.     |
-| [ADR-012](adr/ADR-012-timestamps-and-frame-context.md)  | Each record stores steady-clock time, an OS thread id, and a frame number published by the game loop. |
-| [ADR-013](adr/ADR-013-sink-abstraction.md)              | `ConsoleSink` colors the whole line by level on a terminal; debug sinks are omitted from release.     |
-| [ADR-014](adr/ADR-014-logger-lifetime-and-shutdown.md)  | One process-wide logger; drain vs abandon; no concurrent log during `shutdown`.                       |
-| [ADR-015](adr/ADR-015-crash-handling.md)                | A hard crash may lose queued records; every `Fatal` entry point also writes directly to the console.  |
-| [ADR-016](adr/ADR-016-testing-and-benchmarking.md)      | GoogleTest covers logger behaviour; benchmarks are an opt-in target and are not a CI gate.            |
+- \subpage adr_log_001 — Producers enqueue unformatted records; one backend thread formats them and writes to sinks.
+- \subpage adr_log_002 — Use `{fmt}`, pinned via FetchContent, so formatting is the same on every toolchain.
+- \subpage adr_log_003 — Logging calls are `noexcept` and return void; failures are counted inside the module.
+- \subpage adr_log_004 — Public format strings are checked at compile time; the backend may use a runtime format path.
+- \subpage adr_log_005 — Capture the caller with `std::source_location` in a format-string wrapper, stored as static
+  pointers.
+- \subpage adr_log_006 — The call-site API is functions that forward the format-string wrapper; macros are not required.
+- \subpage adr_log_007 — Six ordered levels and a category bitmask, filtered on the producer before any capture.
+- \subpage adr_log_008 — Records own constructed arguments; one format thunk and one destroy thunk; bounded C-string
+  copy.
+- \subpage adr_log_009 — One bounded mutex-protected MPSC ring; format from slot, then destroy/free, then I/O.
+- \subpage adr_log_010 — A full queue drops the new record and counts it; producers do not wait for space.
+- \subpage adr_log_011 — Slots are preallocated with a 256-byte inline argument buffer, so the hot path does not
+  allocate.
+- \subpage adr_log_012 — Each record stores steady-clock time, an OS thread id, and a frame number published by the game
+  loop.
+- \subpage adr_log_013 — `ConsoleSink` colors the whole line by level on a terminal; debug sinks are omitted from
+  release.
+- \subpage adr_log_014 — One process-wide logger; drain vs abandon; no concurrent log during `shutdown`.
+- \subpage adr_log_015 — A hard crash may lose queued records; every `Fatal` entry point also writes directly to the
+  console.
+- \subpage adr_log_016 — GoogleTest covers logger behaviour; benchmarks are an opt-in target and are not a CI gate.

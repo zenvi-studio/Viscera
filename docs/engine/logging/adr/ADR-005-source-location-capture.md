@@ -1,4 +1,4 @@
-# ADR-005: Source location capture
+# ADR-005: Source location capture {#adr_log_005}
 
 | Field        | Value                                                    |
 |--------------|----------------------------------------------------------|

@@ -1,4 +1,4 @@
-# ADR-006: Warnings and static analysis
+# ADR-006: Warnings and static analysis {#adr_fnd_006}
 
 - **Status:** Accepted
 - **Date:** 2026-11-13

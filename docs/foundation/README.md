@@ -1,3 +1,5 @@
+@page foundation_index Foundation
+
 # Foundation
 
 Repository-wide decisions that apply to the whole Viscera codebase: language standard, compiler, build layout,
@@ -7,23 +9,19 @@ Feature-level design (rendering, weapons, AI, etc.) belongs in future `docs/engi
 
 ## Contents
 
-### ADRs
-
-| ID                                                       | Summary                                                                        |
-|----------------------------------------------------------|--------------------------------------------------------------------------------|
-| [ADR-001](adr/ADR-001-use-cpp23.md)                      | Target **C++23** with standard-required, no compiler extensions                |
-| [ADR-002](adr/ADR-002-clang-gcc-msvc.md)                 | **Clang, GCC, and MSVC**; other compilers fail configure                       |
-| [ADR-003](adr/ADR-003-cmake-project-layout.md)           | Top-level CMake, presets, output dirs, `cmake/` modules                        |
-| [ADR-004](adr/ADR-004-engine-vs-game-split.md)           | Static **engine** library + **game** executable; one-way dependency            |
-| [ADR-005](adr/ADR-005-dependency-management-strategy.md) | **FetchContent** for third-party deps; tests gated on top-level build          |
-| [ADR-006](adr/ADR-006-warnings-and-static-analysis.md)   | Shared **warnings** interface target; optional **clang-tidy** and **cppcheck** |
-| [ADR-007](adr/ADR-007-cross-platform-text-policy.md)     | **LF** text in repo; `.gitattributes` + `.editorconfig`; binary asset rules    |
-
 ### Guides
 
-| File                                                  | Summary                                                                           |
-|-------------------------------------------------------|-----------------------------------------------------------------------------------|
-| [coding-conventions.md](guides/coding-conventions.md) | SOLID, simplicity, modularity, and C++ resource rules, with prefer/avoid examples |
+- \subpage foundation_conventions — SOLID, simplicity, modularity, and C++ resource rules, with prefer/avoid examples
+
+### Architecture decisions
+
+- \subpage adr_fnd_001 — Target **C++23** with standard-required, no compiler extensions
+- \subpage adr_fnd_002 — **Clang, GCC, and MSVC**; other compilers fail configure
+- \subpage adr_fnd_003 — Top-level CMake, presets, output dirs, `cmake/` modules
+- \subpage adr_fnd_004 — Static **engine** library + **game** executable; one-way dependency
+- \subpage adr_fnd_005 — **FetchContent** for third-party deps; tests gated on top-level build
+- \subpage adr_fnd_006 — Shared **warnings** interface target; optional **clang-tidy** and **cppcheck**
+- \subpage adr_fnd_007 — **LF** text in repo; `.gitattributes` + `.editorconfig`; binary asset rules
 
 ### Diagrams
 

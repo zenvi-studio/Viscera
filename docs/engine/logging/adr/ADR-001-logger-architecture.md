@@ -1,4 +1,4 @@
-# ADR-001: Logger architecture
+# ADR-001: Logger architecture {#adr_log_001}
 
 | Field        | Value                                                     |
 |--------------|-----------------------------------------------------------|
