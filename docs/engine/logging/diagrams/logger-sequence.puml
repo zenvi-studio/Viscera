@@ -1,0 +1,134 @@
+@startuml logger-sequence
+title Log record sequence — producer enqueue, then backend format and write
+
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+autonumber
+
+box "Producer thread" #FEFEFE
+  actor "Call site" as Call
+  participant "log / logAt" as Api
+  participant "Logger" as Log
+end box
+
+participant "Ring" as Ring
+
+box "Backend thread" #FEFEFE
+  participant "Backend\n(jthread)" as Back
+  participant "Sinks" as Sinks
+end box
+
+participant "ConsoleSink" as Con
+
+== Filter (producer, no capture) ==
+
+Call -> Api: info / log / fatal(category, fmt, args)
+note right of Api
+  Helpers compile out when the severity
+  is below VISCERA_LOG_MIN_LEVEL.
+  log() / logAt() still compare at runtime.
+end note
+
+Api -> Api: isBelowFloor(level)?
+opt below compile-time floor
+  Api --> Call: return
+end
+
+opt Fatal
+  Api -> Log: sample timestamp, thread id, frame
+  Api -> Api: formatFullLine() into 1024-byte stack buffer
+  Api -> Log: tryWriteFatalConsole(line)
+  Log -> Con: tryWriteFatal()  (try_lock, no wait)
+  Con --> Log: consoleWritten
+end
+
+Api -> Log: loggerRunning()?
+opt not running
+  Log -> Log: count notRunning
+  Api --> Call: return
+end
+
+Api -> Log: shouldLog(level, category)?
+opt filtered out
+  Api --> Call: return
+end
+
+opt not Fatal
+  Api -> Log: sample timestamp, thread id, frame
+end
+
+== Capture and enqueue (producer, no sink I/O) ==
+
+Api -> Log: enqueueLog(...)
+Log -> Log: measureArgs() against 256-byte payload
+opt argument pack does not fit
+  Log -> Log: count argumentBudget
+  Api --> Call: return
+end
+
+Log -> Ring: lock mutex
+opt lock failed, not running, or ring full
+  Log -> Log: count overflow or notRunning
+  Log -> Ring: unlock
+  Api --> Call: return
+end
+
+Ring --> Log: writeSlot()  (unpublished)
+Log -> Log: fill Record header (kind = Log)
+Log -> Log: storeArgs() into payload
+opt storeArgs failed
+  Log -> Log: destroyPack() if non-trivial
+  Log -> Log: count argumentBudget
+  Log -> Ring: abortLogSlot()  (unlock, do not publish)
+  Api --> Call: return
+end
+
+Log -> Log: install formatThunk / destroyThunk
+Log -> Ring: publish()
+Log -> Ring: unlock
+Log -> Ring: notifyOne()
+Api --> Call: return
+note over Call, Ring
+  The producer is done. Formatting and sink I/O
+  run on the backend; they are not on this call stack.
+end note
+
+== Backend (one loop iteration; mutex not held across format or I/O) ==
+
+Back -> Ring: wait until not empty / stop / abandon / flush
+
+alt abandon (flush or shutdown timed out)
+  Back -> Ring: destroy remaining slots,\ndiscard AddSink unique_ptrs
+  Back -> Sinks: flush()
+  Back -> Back: completeFlush(); exit
+else ring empty and stopping
+  Back -> Sinks: flush()
+  Back -> Back: completeFlush(); exit
+else Kind = AddSink
+  Back -> Ring: readSlot(); unlock
+  Back -> Log: registerSink(controlSink)
+  Back -> Ring: lock, consume(), unlock
+else Kind = Log
+  Back -> Ring: readSlot()  (slot stays occupied)
+  Back -> Ring: unlock
+  Back -> Back: format header + formatThunk()\ninto growable buffer
+  note right of Back
+    On format throw or buffer growth failure:
+    count formattingFailures and emit
+    "[file:line] formatting failed".
+  end note
+  Back -> Ring: lock
+  Back -> Back: destroyThunk() if non-null
+  Back -> Ring: consume()
+  Back -> Ring: unlock
+  Back -> Sinks: write(level, line)
+  note right of Sinks
+    Skip ConsoleSink when kFlagConsoleWritten
+    is set (Fatal already printed on stderr).
+    Three consecutive write failures disable
+    that sink. Queue mutex is not held here.
+  end note
+  Back -> Sinks: emitOverflowSummary if overflow advanced
+end
+
+@enduml

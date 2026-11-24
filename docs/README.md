@@ -59,13 +59,23 @@ Handbooks that are not ADRs — how to write code, rather than a single recorded
 
 ## Diagrams
 
-PlantUML sources live in `docs/<module>/diagrams/`. Foundation diagrams:
+PlantUML sources live in `docs/<module>/diagrams/`. Render with a PlantUML plugin in the IDE, or the PlantUML CLI, when
+reviewing architecture.
+
+Foundation:
 
 - [`foundation/diagrams/cmake-targets.puml`](foundation/diagrams/cmake-targets.puml) — CMake target link graph
 - [`foundation/diagrams/module-boundaries.puml`](foundation/diagrams/module-boundaries.puml) — Engine vs game dependency
   rule
 
-Render with a PlantUML plugin in the IDE, or the PlantUML CLI, when reviewing architecture.
+Engine — logging:
+
+- [`engine/logging/diagrams/logger-classes.puml`](engine/logging/diagrams/logger-classes.puml) — Logger, ring, records,
+  and sinks
+- [`engine/logging/diagrams/logger-flow.puml`](engine/logging/diagrams/logger-flow.puml) — Producer filter/capture and
+  backend format/write flow
+- [`engine/logging/diagrams/logger-sequence.puml`](engine/logging/diagrams/logger-sequence.puml) — Call site to sinks as
+  a sequence (enqueue, then backend format/write)
 
 ## Licence
 

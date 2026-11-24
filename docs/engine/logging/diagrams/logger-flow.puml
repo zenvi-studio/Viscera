@@ -1,0 +1,130 @@
+@startuml logger-flow
+title Log record flow — one call from producer to sinks
+
+skinparam shadowing false
+skinparam activityDiamondFontSize 11
+skinparam noteFontSize 11
+
+start
+
+partition "1. Filter (producer, no capture)" {
+  :Call site invokes trace / debug / info / warning / error / fatal\nor log(level, category, format, args);
+  note right
+    Helpers compile to empty when the
+    severity is below VISCERA_LOG_MIN_LEVEL.
+    log() / logAt() still compare at runtime.
+  end note
+
+  if (level below compile-time floor?) then (yes)
+    stop
+  endif
+
+  if (level == Fatal?) then (yes)
+    :Sample timestamp, thread id, frame;
+    :formatFullLine() into 1024-byte stack buffer;
+    :tryWriteFatalConsole()\ntry_lock ConsoleSink, do not wait;
+  endif
+
+  if (logger running?) then (no)
+    :Count notRunning;
+    stop
+  endif
+
+  if (shouldLog(level, category)?) then (no)
+    stop
+  endif
+
+  if (not already sampled for Fatal?) then (yes)
+    :Sample timestamp, thread id, frame;
+  endif
+}
+
+partition "2. Capture and enqueue (producer, no sink I/O)" {
+  if (measureArgs() fits in 256-byte payload?) then (no)
+    :Count argumentBudget;
+    stop
+  endif
+
+  :Lock ring mutex;
+  if (lock failed **or** not running **or** ring full?) then (yes)
+    :Count overflow or notRunning;
+    :Unlock;
+    stop
+  endif
+
+  :writeSlot() -- unpublished cell;
+  :Fill Record header (kind = Log);
+  :storeArgs() into payload;
+
+  if (storeArgs succeeded?) then (no)
+    :destroyPack() if non-trivial;
+    :Count argumentBudget;
+    :abortLogSlot() -- unlock, do not publish;
+    stop
+  endif
+
+  :Install formatThunk / destroyThunk;
+  :publish();
+  :Unlock + notifyOne();
+  :Producer returns;
+}
+
+partition "3. Backend (single consumer; one loop iteration)" {
+  :Wait on CV until not empty / stop / abandon / flush;
+
+  if (abandon set?) then (yes)
+    :Destroy remaining occupied slots\n(discard AddSink unique_ptrs);
+    :flush() each enabled sink;
+    :completeFlush();
+    stop
+  endif
+
+  if (ring empty?) then (yes)
+    :emitOverflowSummary if overflow advanced;
+    if (flush requested or stopping?) then (yes)
+      :flush() each enabled sink;
+      :completeFlush();
+    endif
+    if (stopping?) then (yes)
+      stop
+    else (no)
+      :Loop and wait again;
+      stop
+    endif
+  endif
+
+  :readSlot() -- slot stays occupied;
+  :Unlock (mutex **not** held across format or I/O);
+
+  if (record is AddSink control?) then (yes)
+    :registerSink(controlSink);
+    :Lock, consume(), unlock;
+    :Loop and wait again;
+    stop
+  endif
+
+  :Format header + formatThunk()\ninto growable buffer;
+  note right
+    On throw or buffer growth failure:
+    count formattingFailures and emit
+    "[file:line] formatting failed".
+  end note
+
+  :Lock, destroyThunk() if non-null, consume(), unlock;
+
+  :write(level, line) on each enabled sink;
+  note right
+    Skip ConsoleSink when kFlagConsoleWritten
+    is set (Fatal already printed on stderr).
+    Three consecutive write failures disable
+    that sink; others keep receiving lines.
+    Queue mutex is not held here.
+  end note
+
+  :emitOverflowSummary if overflow advanced;
+  :Loop and wait for the next record;
+}
+
+stop
+
+@enduml

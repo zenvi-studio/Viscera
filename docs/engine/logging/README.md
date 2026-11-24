@@ -114,7 +114,15 @@ unlocks, then enqueues.
  worker threads ┘            (no I/O except Fatal)
 ```
 
-Class and sequence diagrams are deferred until these ADRs are the implementation contract.
+## Diagrams
+
+PlantUML sources; render with an IDE plugin or the PlantUML CLI.
+
+| File                                                  | Description                                                           |
+|-------------------------------------------------------|-----------------------------------------------------------------------|
+| [logger-classes.puml](diagrams/logger-classes.puml)   | Public types, process-wide `Logger`, ring slots, and sink inheritance |
+| [logger-flow.puml](diagrams/logger-flow.puml)         | One log call: producer filter and capture, then one backend iteration |
+| [logger-sequence.puml](diagrams/logger-sequence.puml) | Same path as a sequence: call site, ring hand-off, backend, sinks     |
 
 ## ADRs
 
