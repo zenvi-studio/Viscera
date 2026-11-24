@@ -13,7 +13,8 @@
       "cacheVariables": {
         "VISCERA_WARNINGS_AS_ERRORS": "ON",
         "VISCERA_CLANG_TIDY": "OFF",
-        "VISCERA_CPPCHECK": "OFF"
+        "VISCERA_CPPCHECK": "OFF",
+        "VISCERA_BUILD_DOCS": "OFF"
       }
     },
     {
@@ -119,6 +120,16 @@
         "VISCERA_CLANG_TIDY": "ON",
         "VISCERA_CPPCHECK": "ON"
       }
+    },
+    {
+      "name": "docs",
+      "displayName": "Documentation (Doxygen)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/cmake-build-docs",
+      "cacheVariables": {
+        "VISCERA_BUILD_DOCS": "ON",
+        "BUILD_TESTING": "OFF"
+      }
     }
   ],
   "buildPresets": [
@@ -167,6 +178,13 @@
     {
       "name": "debug-analysis",
       "configurePreset": "debug-analysis"
+    },
+    {
+      "name": "docs",
+      "configurePreset": "docs",
+      "targets": [
+        "docs"
+      ]
     }
   ],
   "testPresets": [

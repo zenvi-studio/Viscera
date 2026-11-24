@@ -77,6 +77,28 @@ There is no separate clang-tidy custom target that walks `compile_commands.json`
 [ADR-006](docs/foundation/adr/ADR-006-warnings-and-static-analysis.md) does not list one as follow-up work. The
 whole-project database run that does exist is `VisceraCppcheck`, documented in the README.
 
+### cppcheck
+
+CMake is the authority. `debug-cppcheck` and `debug-analysis` set `VISCERA_CPPCHECK=ON`, which runs cppcheck on each
+compiled `.cpp` with that unit’s compile flags (`--std=c++23`, `warning,style,performance,portability`). Headers are
+checked as includes, not as standalone files. Whole-project:
+
+```bash
+cmake --build --preset debug-analysis --target VisceraCppcheck
+```
+
+`.cppcheck` is a Cppcheck GUI project (`check-headers` is false; it imports `cmake-build-debug/compile_commands.json`).
+CMake does not load it. `VisceraCppcheck` always uses the **current** build directory’s `compile_commands.json`.
+
+CLion’s johnthagen Cppcheck plugin is disabled in [
+`.idea/inspectionProfiles/Project_Default.xml`](.idea/inspectionProfiles/Project_Default.xml).
+It does not receive include paths or defines, and it treats `.hpp` as a source file, so `unusedStructMember` and
+`unusedPrivateFunction` fire on types whose members are used from `.cpp` files. Do not “fix” those editor marks with
+inline `cppcheck-suppress` comments.
+
+Hover a remaining yellow underline: `Cppcheck:` is the plugin; `Class is never used` / `Declaration is never used` is
+CLion’s own unused inspection, not the CMake `analysis` profile.
+
 A manual clang-tidy run reads the compilation database with `-p`:
 
 ```bash

@@ -1,4 +1,4 @@
-# ADR-002: Clang, GCC, and MSVC
+# ADR-002: Clang, GCC, and MSVC {#adr_fnd_002}
 
 - **Status:** Accepted
 - **Date:** 2026-11-13

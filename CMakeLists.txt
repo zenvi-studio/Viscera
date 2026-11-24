@@ -26,6 +26,7 @@ unset(ENABLE_WARNINGS_AS_ERRORS CACHE)
 option(VISCERA_CLANG_TIDY "Run clang-tidy during build" OFF)
 option(VISCERA_CPPCHECK "Run cppcheck during build" OFF)
 option(VISCERA_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+option(VISCERA_BUILD_DOCS "Enable Doxygen documentation target" OFF)
 
 # =============[ Testing Configuration ]=============
 
@@ -33,7 +34,6 @@ include(CTest)
 if (BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
     enable_testing()
 endif ()
-
 
 # =============[ Dependencies ]=============
 
@@ -69,4 +69,42 @@ add_subdirectory(game)
 if (BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
     add_subdirectory(engine/tests)
     #    add_subdirectory(game/tests)
+endif ()
+
+# =============[ Documentation ]=============
+
+if (VISCERA_BUILD_DOCS AND PROJECT_IS_TOP_LEVEL)
+    find_package(Doxygen REQUIRED OPTIONAL_COMPONENTS dot)
+
+    if (DOXYGEN_FOUND)
+        # Set Doxygen options via DOXYGEN_<OPTION> variables
+        set(DOXYGEN_PROJECT_NAME "${PROJECT_NAME}")
+        set(DOXYGEN_PROJECT_NUMBER "${PROJECT_VERSION}")
+        set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/docs")
+
+        # Input & Filtering: scan public headers + existing markdown docs, skip internal detail/
+        set(DOXYGEN_RECURSIVE YES)
+        set(DOXYGEN_EXCLUDE_PATTERNS "*/detail/*" "*/templates/*")
+        set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "${CMAKE_CURRENT_SOURCE_DIR}/docs/README.md")
+
+        # C++ & Diagram tuning
+        set(DOXYGEN_EXTRACT_ALL NO)
+        set(DOXYGEN_EXTRACT_STATIC YES)
+        set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
+        set(DOXYGEN_HAVE_DOT ${DOXYGEN_DOT_FOUND})
+        set(DOXYGEN_UML_LOOK YES)
+        set(DOXYGEN_CALL_GRAPH NO)
+        set(DOXYGEN_CALLER_GRAPH NO)
+
+        doxygen_add_docs(
+                docs
+                "${CMAKE_CURRENT_SOURCE_DIR}/engine/include"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs"
+                COMMENT "Generating Viscera API documentation with Doxygen"
+        )
+
+        set_target_properties(docs PROPERTIES FOLDER "Documentation")
+    else ()
+        message(STATUS "Doxygen not found; documentation target will not be generated.")
+    endif ()
 endif ()

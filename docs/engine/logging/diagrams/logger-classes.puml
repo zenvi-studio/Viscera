@@ -1,0 +1,257 @@
+@startuml logger-classes
+title viscera::logging — class structure
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+hide circle
+hide empty members
+
+package "viscera::logging  (public API)" as pub {
+  enum Level {
+    Trace = 0
+    Debug
+    Info
+    Warning
+    Error
+    Fatal = 5
+  }
+
+  enum Category {
+    Core
+    Render
+    Audio
+    Asset
+    Input
+    Game
+  }
+
+  class Config {
+    +queueCapacity: size_t = 8192
+    +flushTimeout: milliseconds = 1s
+    +sinks: vector<unique_ptr<Sink>>
+    +filePath: optional<path>
+    +sourceRootPrefix: string
+  }
+
+  class Counters {
+    +overflow: uint64
+    +argumentBudget: uint64
+    +notRunning: uint64
+    +formattingFailures: uint64
+    +flushTimeouts: uint64
+    +sinkWriteFailures: vector<uint64>
+  }
+
+  class FormatString <<template>> {
+    +format: fmt::format_string
+    +location: source_location
+    +FormatString(s, loc = current()) <<consteval>>
+  }
+
+  class "logging API" as Api <<facade>> {
+    +initialize(config): bool
+    +shutdown()
+    +flush()
+    +log / logAt / trace..fatal()
+    +setMinLevel(level)
+    +setCategoryEnabled(category, enabled)
+    +setCategoryMinLevel(category, level)
+    +clearCategoryMinLevel(category)
+    +setFrame(frame)
+    +addSink(sink)
+    +counters(): Counters
+  }
+
+  abstract class Sink {
+    +{abstract} write(level, line): bool
+    +{abstract} flush()
+    +{abstract} name(): string_view
+    +setEnabled(isEnabled)
+    +enabled(): bool
+    -m_enabled: atomic<bool>
+  }
+
+  class ConsoleSink {
+    +write(level, line): bool
+    +flush()
+    +name(): "console"
+    +tryWriteFatal(line): bool
+    -m_file: FILE*  <<not owned>>
+    -m_mutex: mutex
+  }
+
+  class FileSink {
+    +write(level, line): bool
+    +flush()
+    +name(): "file"
+    +openFailed(): bool
+    -m_file: unique_ptr<FILE>
+    -m_openFailed: bool
+  }
+
+  class MemorySink {
+    +write(level, line): bool
+    +flush()
+    +name(): "memory"
+    +lines(): vector<string>
+    +flushCount(): uint64
+  }
+
+  class DebuggerSink {
+    +write(level, line): bool
+    +flush()
+    +name(): "debugger"
+  }
+
+  note bottom of DebuggerSink
+    Compiled only when
+    VISCERA_LOG_DEBUG_SINKS is on.
+  end note
+
+  note bottom of Api
+    Free functions in namespace viscera::logging.
+    Call sites include logging.hpp; they never
+    name the process-wide Logger type.
+  end note
+}
+
+package "Logger.cpp  (anonymous namespace)" as impl {
+  enum RunState {
+    Stopped
+    Running
+    Stopping
+  }
+
+  class SinkState {
+    +sink: unique_ptr<Sink>
+    +writeFailures: atomic<uint64>
+    +consecutiveFailures: uint32
+  }
+
+  class Logger {
+    +initialize(config): bool
+    +shutdown()
+    +flush()
+    +setMinLevel()
+    +setCategoryEnabled()
+    +setFrame()
+    +addSink(sink)
+    +snapshot(): Counters
+    +shouldLog(level, category): bool
+    +acquireLogSlot(): Record*
+    +commitLogSlot()
+    +abortLogSlot()
+    +tryWriteFatalConsole(line): bool
+    -backendLoop(stop)
+    -writeLineToSinks()
+    --
+    -m_state: atomic<RunState>
+    -m_ring: Ring
+    -m_thread: jthread
+    -m_sinks: vector<unique_ptr<SinkState>>
+    -m_console: ConsoleSink*
+    -m_minLevel / m_categoryMask / m_frame
+    -m_overflow / m_argumentBudget / ...
+    -m_abandon / m_flushRequested
+  }
+}
+
+package "viscera::logging::detail" as det {
+  class Ring {
+    +reset(capacity)
+    +clear()
+    +mutex() / cv()
+    +notifyOne() / notifyAll()
+    +empty() / full() / occupied()
+    +writeSlot(): Record*
+    +publish()
+    +readSlot(): Record*
+    +consume()
+    --
+    -m_slots: vector<Record>
+    -m_capacity / m_mask
+    -m_write / m_read
+  }
+
+  enum "Record::Kind" as RecordKind {
+    Empty
+    Log
+    AddSink
+  }
+
+  class Record {
+    +kind: Kind
+    +level: Level
+    +category: Category
+    +timestampNs: uint64
+    +threadId: uint32
+    +frame: uint64
+    +file / function: const char*  <<static>>
+    +line: uint32
+    +format: string_view  <<static>>
+    +formatThunk: FormatThunk
+    +destroyThunk: DestroyThunk
+    +flags: uint8
+    +controlSink: Sink*
+    +payload: byte[256]
+  }
+
+  class CapturedString {
+    +data: const char*
+    +size: uint32
+    +inlineStorage: bool
+  }
+
+  class Capture <<utility>> {
+    enqueueLog()
+    measureArgs()
+    storeArgs()
+    formatThunk()
+    destroyThunk()
+  }
+
+  note left of Ring
+    MPSC: many producers, one backend.
+    Mutex is never held across Sink::write
+    or Sink::flush. Two-phase publish:
+    writeSlot then publish, or abort.
+  end note
+
+  note right of Capture
+    Producer constructs owned arguments
+    in the slot. Backend never sees the
+    original Args...; it only calls the
+    installed thunks.
+  end note
+}
+
+Api ..> Logger : process-wide instance
+Api ..> FormatString : log parameter
+Api ..> Config
+Api ..> Counters
+
+Config *-- Sink : initial list
+Logger *-- Ring
+Logger *-- SinkState
+Logger --> RunState
+SinkState *-- Sink
+
+Ring *-- "0..N" Record : power-of-two slots
+Record --> RecordKind
+Record ..> CapturedString : strings in payload
+Capture ..> Record : construct payload + thunks
+Capture ..> Ring : acquire / commit / abort
+
+Sink <|-- ConsoleSink
+Sink <|-- FileSink
+Sink <|-- MemorySink
+Sink <|-- DebuggerSink
+
+' Layout: implementation left, queue internals right, public API below.
+Logger -[hidden]down- Api
+Logger -[hidden]right- Ring
+Ring -[hidden]down- Record
+Sink -[hidden]down- ConsoleSink
+
+@enduml

@@ -1,4 +1,4 @@
-# ADR-004: Engine vs game split
+# ADR-004: Engine vs game split {#adr_fnd_004}
 
 - **Status:** Accepted
 - **Date:** 2026-11-13

@@ -1,4 +1,4 @@
-# ADR-006: Warnings and static analysis
+# ADR-006: Warnings and static analysis {#adr_fnd_006}
 
 - **Status:** Accepted
 - **Date:** 2026-11-13
@@ -50,15 +50,25 @@ passes, turned on by presets, so day-to-day Debug builds stay fast until someone
 ### cppcheck
 
 - Option **`VISCERA_CPPCHECK`**: when ON, CMake sets **`CMAKE_CXX_CPPCHECK`** (and the same command for C) so each
-  translation unit is checked during the build. Checks are `warning,style,performance,portability` at `--std=c++23`,
-  with `--inline-suppr` and **`.cppcheck-suppressions`**.
-- That suppressions file is the build-time list. It currently holds two global ids, `missingIncludeSystem` and
-  `unmatchedSuppression`. The **`.cppcheck`** GUI project mirrors those two ids and does not load a platform library.
+  compiled translation unit is checked during the build. Checks are `warning,style,performance,portability` at
+  `--std=c++23`, with `--inline-suppr` and **`.cppcheck-suppressions`**. CMake appends that unit’s include paths and
+  defines. Headers are analyzed only as includes of those `.cpp` files, not as standalone TUs. Per-file analysis does
+  **not** enable `unusedFunction` (whole-program only).
+- That suppressions file is the build-time list. Global ids are `missingIncludeSystem` and `unmatchedSuppression`.
+  File-scoped ids belong here, not as `cppcheck-suppress` comments in product code. The **`.cppcheck`** file is a
+  **Cppcheck GUI** project: it imports `cmake-build-debug/compile_commands.json`, sets `check-headers` to false, and
+  mirrors the suppressions list. CMake does not load `.cppcheck`. **`VisceraCppcheck`** uses
+  `${PROJECT_BINARY_DIR}/compile_commands.json` so the active preset’s database is used.
 - A custom target **`VisceraCppcheck`** (created only when the option is ON and `cppcheck` is found) runs cppcheck on
-  `compile_commands.json`, skips `_deps`, and always uses `--error-exitcode=1`. It is not part of the default build.
+  that compilation database, skips `_deps`, and always uses `--error-exitcode=1`. It is not part of the default build.
   Run it with `cmake --build --preset debug-cppcheck --target VisceraCppcheck`.
 - Missing `cppcheck` prints a warning and configure continues.
 - Preset **`debug-cppcheck`** turns the option on. Preset **`debug-analysis`** turns it on together with clang-tidy.
+- CLion on-the-fly Cppcheck (the johnthagen plugin) is **disabled** in the project inspection profile. It copies each
+  open file to a temp path with no compilation database, treats `.hpp` as a source file, and reports false
+  `unusedStructMember` / `unusedPrivateFunction` diagnostics. Editor marks whose tooltip starts with `Cppcheck:` are
+  from that plugin; CMake `analysis` is the gate. ReSharper unused inspections (`Class is never used`) are a separate
+  engine and are not cppcheck.
 
 ### Formatting
 

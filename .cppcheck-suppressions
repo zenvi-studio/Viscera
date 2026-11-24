@@ -1,5 +1,5 @@
 # Cppcheck suppressions (build-time list; CMake passes this file).
-# The .cppcheck GUI project mirrors the two global ids below.
+# The .cppcheck GUI project mirrors the ids below.
 #
 # Only add suppressions after reviewing the diagnostic
 # and confirming that it is a false positive or intentional.
@@ -10,5 +10,5 @@ missingIncludeSystem
 # A suppression with no current match should not fail the run.
 unmatchedSuppression
 
-# Example:
-# someCheckId:engine/src/SomeFile.cpp
+# Implicit conversion from string literals is the logging API (same as fmt::format_string).
+noExplicitConstructor:engine/include/viscera/logging/FormatString.hpp

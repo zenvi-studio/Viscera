@@ -14,16 +14,17 @@ assets, and game logic in a structure that stays easy to extend.
 
 ## Tech Stack
 
-| Layer           | Technology              | Version / notes                        | Source                                                    |
-|-----------------|-------------------------|----------------------------------------|-----------------------------------------------------------|
-| Language        | C++                     | C++23 (`cxx_std_23`)                   | Root `CMakeLists.txt`, `engine/CMakeLists.txt`            |
-| Build           | CMake                   | 3.28 or newer (policies through 4.4.5) | `CMakeLists.txt`, `CMakePresets.json`                     |
-| Generator       | Ninja                   | Preset default                         | `CMakePresets.json`                                       |
-| Compiler        | **Clang, GCC, or MSVC** | `clang++`, `g++`, or `cl`              | `cmake/CompilerWarnings.cmake`, presets                   |
-| Tests           | GoogleTest              | v1.18.0 (FetchContent)                 | `cmake/Dependencies.cmake`                                |
-| Static analysis | clang-tidy              | Optional at build time                 | `.clang-tidy`, `VISCERA_CLANG_TIDY`                       |
-| Static analysis | cppcheck                | Optional at build time                 | `.cppcheck`, `.cppcheck-suppressions`, `VISCERA_CPPCHECK` |
-| Formatting      | clang-format            | Project `.clang-format`                | `.clang-format`                                           |
+| Layer           | Technology              | Version / notes                        | Source                                                                |
+|-----------------|-------------------------|----------------------------------------|-----------------------------------------------------------------------|
+| Language        | C++                     | C++23 (`cxx_std_23`)                   | Root `CMakeLists.txt`, `engine/CMakeLists.txt`                        |
+| Build           | CMake                   | 3.28 or newer (policies through 4.4.5) | `CMakeLists.txt`, `CMakePresets.json`                                 |
+| Generator       | Ninja                   | Preset default                         | `CMakePresets.json`                                                   |
+| Compiler        | **Clang, GCC, or MSVC** | `clang++`, `g++`, or `cl`              | `cmake/CompilerWarnings.cmake`, presets                               |
+| Tests           | GoogleTest              | v1.18.0 (FetchContent)                 | `cmake/Dependencies.cmake`                                            |
+| Static analysis | clang-tidy              | Optional at build time                 | `.clang-tidy`, `VISCERA_CLANG_TIDY`                                   |
+| Static analysis | cppcheck                | Optional at build time                 | `.cppcheck-suppressions`, `VISCERA_CPPCHECK`; `.cppcheck` is GUI-only |
+| Formatting      | clang-format            | Project `.clang-format`                | `.clang-format`                                                       |
+| API docs        | Doxygen                 | Optional; CMake `docs` target          | `VISCERA_BUILD_DOCS`, preset `docs`                                   |
 
 Supported compilers are **Clang** (including AppleClang), **GCC** (`g++`), and **MSVC** (`cl`). Configuration fails
 if CMake reports another compiler id, including **clang-cl**. The check lives in
@@ -48,13 +49,13 @@ flowchart LR
 
 ### Directory map
 
-| Path                | Purpose                                                                            |
-|---------------------|------------------------------------------------------------------------------------|
-| `engine/`           | Engine library — public headers under `include/viscera/`, implementation in `src/` |
-| `game/`             | Game target that links `Viscera::Engine`                                           |
-| `engine/tests/`     | GoogleTest suite for the engine (top-level builds only)                            |
-| `cmake/`            | Shared CMake modules (`Dependencies.cmake`, `CompilerWarnings.cmake`)              |
-| `CMakePresets.json` | Debug / Release presets for Clang, GCC, and MSVC, plus clang-tidy and cppcheck    |
+| Path                | Purpose                                                                                  |
+|---------------------|------------------------------------------------------------------------------------------|
+| `engine/`           | Engine library — public headers under `include/viscera/`, implementation in `src/`       |
+| `game/`             | Game target that links `Viscera::Engine`                                                 |
+| `engine/tests/`     | GoogleTest suite for the engine (top-level builds only)                                  |
+| `cmake/`            | Shared CMake modules (`Dependencies.cmake`, `CompilerWarnings.cmake`)                    |
+| `CMakePresets.json` | Debug / Release presets for Clang, GCC, and MSVC, plus clang-tidy, cppcheck, and Doxygen |
 
 Build outputs (binaries) are written under `<build-dir>/bin/` (for example `cmake-build-debug/bin/VisceraGame`).
 
@@ -98,8 +99,15 @@ GoogleTest. MSVC presets still need Visual Studio's `cl` on `PATH`.
   `debug-clang-tidy` and `debug-analysis` presets enable it on the Clang `debug` build. With GCC or MSVC,
   `-DVISCERA_CLANG_TIDY=ON` warns at configure and skips the tool.
 - **cppcheck** — Included in the WinLibs archive **with LLVM/Clang/LLD/LLDB**. Enable via the `debug-cppcheck` or
-  `debug-analysis` preset, or `-DVISCERA_CPPCHECK=ON`.
+  `debug-analysis` preset, or `-DVISCERA_CPPCHECK=ON`. CMake runs cppcheck on compiled translation units. The
+  `.cppcheck` file is only for the Cppcheck GUI; it is not the CLion or CMake gate.
 - **CLion** — The repo includes `.idea/` metadata; opening the folder and using CMake presets matches local workflow.
+  On-the-fly Cppcheck is disabled in the project inspection profile because it does not use `compile_commands.json`.
+  Use `debug-analysis` or the `VisceraCppcheck` target. A yellow underline whose tooltip starts with `Cppcheck:` is
+  the IDE plugin; `Class is never used` is a CLion inspection, not cppcheck.
+- **Doxygen** — Required only when generating API docs. Install from [doxygen.nl](https://www.doxygen.nl/download.html)
+  or `winget install DimitriVanHeesch.Doxygen`, and put `doxygen` on `PATH`. Graphviz (`dot`) is optional; if CMake
+  finds it, Doxygen draws UML-style class diagrams. Enable with the `docs` preset or `-DVISCERA_BUILD_DOCS=ON`.
 
 ## Getting Started
 
@@ -192,25 +200,27 @@ CMake options and cache variables used in this repo:
 | Variable                                  | Default                         | Description                                                                                                                                                            |
 |-------------------------------------------|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `CMAKE_BUILD_TYPE`                        | Preset: `Debug` or `Release`    | Standard CMake build type                                                                                                                                              |
-| `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` | Clang in `debug` / `release` | `clang++`, `g++`, or `cl`. Other ids, including clang-cl, fail configure                                                          |
+| `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` | Clang in `debug` / `release`    | `clang++`, `g++`, or `cl`. Other ids, including clang-cl, fail configure                                                                                               |
 | `VISCERA_WARNINGS_AS_ERRORS`              | `OFF` in CMake; `ON` in presets | Compiler warnings fail the build (`CMAKE_COMPILE_WARNING_AS_ERROR`). Also passes `--warnings-as-errors=*` to clang-tidy and `--error-exitcode=1` to per-file cppcheck. |
-| `VISCERA_CLANG_TIDY`                      | `OFF`                           | Run clang-tidy on Clang compilations via `CMAKE_CXX_CLANG_TIDY`. GCC and MSVC skip it with a warning                                                              |
+| `VISCERA_CLANG_TIDY`                      | `OFF`                           | Run clang-tidy on Clang compilations via `CMAKE_CXX_CLANG_TIDY`. GCC and MSVC skip it with a warning                                                                   |
 | `VISCERA_CPPCHECK`                        | `OFF`                           | Run cppcheck on every compilation via `CMAKE_CXX_CPPCHECK`, and add the `VisceraCppcheck` target                                                                       |
 | `BUILD_TESTING`                           | CTest default when top-level    | Fetches GoogleTest and builds `VisceraEngineTests`                                                                                                                     |
+| `VISCERA_BUILD_DOCS`                      | `OFF`                           | Adds the `docs` target, which runs Doxygen over public headers and `docs/`. Requires Doxygen on `PATH`                                                                 |
 
 Configure presets:
 
-| Preset             | Build directory            | Notes                                                   |
-|--------------------|----------------------------|---------------------------------------------------------|
-| `debug`            | `cmake-build-debug`        | Clang, Debug, warnings as errors                        |
-| `release`          | `cmake-build-release`      | Clang, optimized build, warnings as errors              |
-| `debug-gcc`        | `cmake-build-debug-gcc`    | GCC, Debug, warnings as errors                          |
-| `release-gcc`      | `cmake-build-release-gcc`  | GCC, optimized build, warnings as errors                |
-| `debug-msvc`       | `cmake-build-debug-msvc`   | MSVC, Debug, warnings as errors; Windows only           |
-| `release-msvc`     | `cmake-build-release-msvc` | MSVC, optimized build, warnings as errors; Windows only |
-| `debug-clang-tidy` | `cmake-build-clang-tidy`   | Inherits `debug` (Clang), plus `VISCERA_CLANG_TIDY=ON`  |
-| `debug-cppcheck`   | `cmake-build-cppcheck`     | Inherits `debug` (Clang), plus `VISCERA_CPPCHECK=ON`    |
-| `debug-analysis`   | `cmake-build-analysis`     | Inherits `debug` (Clang), plus clang-tidy and cppcheck  |
+| Preset             | Build directory            | Notes                                                        |
+|--------------------|----------------------------|--------------------------------------------------------------|
+| `debug`            | `cmake-build-debug`        | Clang, Debug, warnings as errors                             |
+| `release`          | `cmake-build-release`      | Clang, optimized build, warnings as errors                   |
+| `debug-gcc`        | `cmake-build-debug-gcc`    | GCC, Debug, warnings as errors                               |
+| `release-gcc`      | `cmake-build-release-gcc`  | GCC, optimized build, warnings as errors                     |
+| `debug-msvc`       | `cmake-build-debug-msvc`   | MSVC, Debug, warnings as errors; Windows only                |
+| `release-msvc`     | `cmake-build-release-msvc` | MSVC, optimized build, warnings as errors; Windows only      |
+| `debug-clang-tidy` | `cmake-build-clang-tidy`   | Inherits `debug` (Clang), plus `VISCERA_CLANG_TIDY=ON`       |
+| `debug-cppcheck`   | `cmake-build-cppcheck`     | Inherits `debug` (Clang), plus `VISCERA_CPPCHECK=ON`         |
+| `debug-analysis`   | `cmake-build-analysis`     | Inherits `debug` (Clang), plus clang-tidy and cppcheck       |
+| `docs`             | `cmake-build-docs`         | `VISCERA_BUILD_DOCS=ON`, tests off; builds the `docs` target |
 
 MSVC presets call `cl` by name, so configure them from a Visual Studio developer shell where `cl` is on `PATH`. There
 are no project-specific environment variables for the current scaffold.
@@ -232,9 +242,58 @@ are no project-specific environment variables for the current scaffold.
 | Full cppcheck (not part of all)    | `cmake --build --preset debug-cppcheck --target VisceraCppcheck` |
 | Run tests                          | `ctest --preset debug` (also `debug-gcc`, `debug-msvc`)          |
 | Format (if clang-format installed) | `clang-format -i <files>` (project style in `.clang-format`)     |
+| Generate API docs (Doxygen)        | `cmake --preset docs` then `cmake --build --preset docs`         |
 
 `CMAKE_EXPORT_COMPILE_COMMANDS` is enabled at the project root, so after configure you get `compile_commands.json` in
 the build tree for IDE indexing and clang-tidy.
+
+## API documentation (Doxygen)
+
+There is no checked-in `Doxyfile`. When `VISCERA_BUILD_DOCS` is on, CMake finds Doxygen, writes a config in the build
+tree, and exposes a `docs` target. That target is not part of `all`; you have to build it explicitly.
+
+It scans public engine headers under `engine/include/` and the markdown under `docs/`. Paths matching `*/detail/*` and
+`*/templates/*` are skipped. The landing page is [`docs/README.md`](docs/README.md). Only documented members are
+extracted (`EXTRACT_ALL` is off); undocumented public symbols produce Doxygen warnings.
+
+### Generate with the `docs` preset
+
+```bash
+cmake --preset docs
+cmake --build --preset docs
+```
+
+The configure preset turns `VISCERA_BUILD_DOCS` on, turns tests off, and uses `cmake-build-docs`. The matching build
+preset builds only the `docs` target.
+
+Open `cmake-build-docs/docs/html/index.html` in a browser.
+
+On Windows (PowerShell), from the repo root:
+
+```powershell
+start cmake-build-docs\docs\html\index.html
+```
+
+In CLion, select the `docs` CMake preset and build the `docs` target.
+
+### Generate without presets
+
+```bash
+cmake -S . -B cmake-build-docs -DVISCERA_BUILD_DOCS=ON -DBUILD_TESTING=OFF
+cmake --build cmake-build-docs --target docs
+```
+
+To attach the target to an existing tree (HTML then lands under that build directory):
+
+```bash
+cmake --preset debug -DVISCERA_BUILD_DOCS=ON
+cmake --build --preset debug --target docs
+```
+
+That last form writes `cmake-build-debug/docs/html/index.html`.
+
+Do not invoke `doxygen` by hand against the source tree; the generated Doxyfile lives in the build directory and is
+what the `docs` target runs.
 
 ## Testing
 
@@ -280,13 +339,15 @@ heading in [`CHANGELOG.md`](CHANGELOG.md) the same.
 
 ## Troubleshooting
 
-| Issue                                                 | What to check                                                                                                      |
-|-------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| `Unsupported compiler` or `clang-cl is not supported` | Use Clang (`clang++`), GCC (`g++`), or MSVC (`cl`). A preset sets the compiler for you.                           |
-| `'cl' is not recognized`                              | Open an x64 Native Tools or Developer PowerShell for Visual Studio, then configure `debug-msvc` or `release-msvc`. |
-| Tests fail to fetch                                   | Network access for GitHub (`googletest` FetchContent) and Git installed.                                           |
-| `clang-tidy` or `cppcheck` was not found              | Configure warns and continues. Install the tool, or leave `VISCERA_CLANG_TIDY` / `VISCERA_CPPCHECK` OFF.           |
-| Wrong compiler in CLion                               | Settings → Build → CMake → select the preset for Clang, GCC, or MSVC.                                              |
+| Issue                                                 | What to check                                                                                                                                                                  |
+|-------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Unsupported compiler` or `clang-cl is not supported` | Use Clang (`clang++`), GCC (`g++`), or MSVC (`cl`). A preset sets the compiler for you.                                                                                        |
+| `'cl' is not recognized`                              | Open an x64 Native Tools or Developer PowerShell for Visual Studio, then configure `debug-msvc` or `release-msvc`.                                                             |
+| Tests fail to fetch                                   | Network access for GitHub (`googletest` FetchContent) and Git installed.                                                                                                       |
+| `clang-tidy` or `cppcheck` was not found              | Configure warns and continues. Install the tool, or leave `VISCERA_CLANG_TIDY` / `VISCERA_CPPCHECK` OFF.                                                                       |
+| Wrong compiler in CLion                               | Settings → Build → CMake → select the preset for Clang, GCC, or MSVC.                                                                                                          |
+| CLion yellow `unused` underlines, `analysis` is clean | Those marks are the on-the-fly Cppcheck plugin (disabled in this repo’s inspection profile). Hover: `Cppcheck:` vs `never used`. Rebuild `debug-analysis` for the real report. |
+| `Could not find Doxygen` or no `docs` target          | Install Doxygen, put `doxygen` on `PATH`, and reconfigure with the `docs` preset or `-DVISCERA_BUILD_DOCS=ON`. Graphviz is optional.                                           |
 
 ## Documentation
 
@@ -294,6 +355,9 @@ Architecture decisions, diagrams, module docs, and coding conventions live under
 ADRs (C++23, compilers, CMake layout, engine/game split, dependencies, warnings and static analysis, text policy) and
 the [coding conventions](docs/foundation/guides/coding-conventions.md) guide are in
 [`docs/foundation/`](docs/foundation/README.md).
+
+Generated API HTML (Doxygen) is described under [API documentation (Doxygen)](#api-documentation-doxygen). Those pages
+are build artifacts; they are not committed.
 
 Contributor workflow: [`CONTRIBUTING.md`](CONTRIBUTING.md). Version history: [`CHANGELOG.md`](CHANGELOG.md). Fetched
 dependencies: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

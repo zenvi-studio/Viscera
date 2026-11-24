@@ -1,0 +1,27 @@
+#pragma once
+
+/**
+ * @file
+ * @brief Compile-time logging floor (VISCERA_LOG_MIN_LEVEL).
+ *
+ * CMake configure_file generates MinLevel.hpp from this template. The
+ * substituted integer matches Level: 0 Trace, 1 Debug, 2 Info, 3 Warning,
+ * 4 Error, 5 Fatal. Cache variable VISCERA_LOG_MIN_LEVEL defaults to Trace
+ * for Debug/RelWithDebInfo and Info for Release/MinSizeRel.
+ *
+ * If the macro is already defined (a test may set it before including
+ * the logging headers), this header leaves that value alone so a
+ * translation unit can compile a different floor without rebuilding the
+ * engine.
+ *
+ * Convenience functions below the floor have empty bodies. log() and
+ * logAt() still compare at runtime via isBelowFloor() so
+ * log(Level::Debug, ...) cannot capture when the floor is Info.
+ * Argument expressions are still evaluated.
+ */
+
+#ifndef VISCERA_LOG_MIN_LEVEL
+    // clang-format off
+    #define VISCERA_LOG_MIN_LEVEL @VISCERA_LOG_MIN_LEVEL_VALUE@
+    // clang-format on
+#endif
