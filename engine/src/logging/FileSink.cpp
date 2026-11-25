@@ -6,7 +6,15 @@ namespace viscera::logging
 {
     FileSink::FileSink(const std::filesystem::path &path)
     {
-        #ifdef _WIN32
+        #ifdef _MSC_VER
+        // _wfopen is deprecated under /WX (C4996). _wfopen_s is the same open.
+        std::FILE *file = nullptr;
+        if (_wfopen_s(&file, path.c_str(), L"ab") != 0)
+        {
+            file = nullptr;
+        }
+        m_file.reset(file);
+        #elifdef _WIN32
         m_file.reset(_wfopen(path.c_str(), L"ab"));
         #else
         m_file.reset(std::fopen(path.c_str(), "ab"));

@@ -1,12 +1,12 @@
 # ADR-015: Crash handling {#adr_log_015}
 
-| Field        | Value                                                                                        |
-|--------------|----------------------------------------------------------------------------------------------|
-| **Status**   | Accepted                                                                                     |
-| **Date**     | 2026-11-18                                                                                   |
-| **Deciders** | Cas Rovers                                                                                   |
-| **Module**   | `logging` (`viscera::logging`)                                                               |
-| **Related**  | Depends on: ADR-001, ADR-003, ADR-008, ADR-010, ADR-011, ADR-013, ADR-014 · Supersedes: none |
+| Field        | Value                                                                                                                                                                                       |
+|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Status**   | Accepted                                                                                                                                                                                    |
+| **Date**     | 2026-11-18                                                                                                                                                                                  |
+| **Deciders** | Cas Rovers                                                                                                                                                                                  |
+| **Module**   | `logging` (`viscera::logging`)                                                                                                                                                              |
+| **Related**  | Depends on: ADR-001, ADR-003, ADR-008, ADR-010, ADR-011, ADR-013, ADR-014 · Supersedes: none · See also: [engine/error ADR-006](../../error/adr/ADR-006-panic-assertions-and-exceptions.md) |
 
 ## Context
 
@@ -25,7 +25,9 @@ There are two different events people call a crash:
   the normal logger can deadlock or recurse.
 
 ADR-003 forbids the logger from taking the process down. `Fatal` is a severity (ADR-007), not an instruction to abort.
-Whether the process exits is the engine's decision, made after the log call returns.
+Whether the process exits is the engine's decision, made after the log call returns. How the process terminates is
+[engine/error ADR-006](../../error/adr/ADR-006-panic-assertions-and-exceptions.md). This ADR does not change: `Fatal`
+remains a severity and does not abort.
 
 ADR-014's `flush` can drain the ring when the process is still healthy. It is the wrong tool inside a signal handler,
 and it can block for the flush timeout, so it should not be hidden inside every `Fatal` call.

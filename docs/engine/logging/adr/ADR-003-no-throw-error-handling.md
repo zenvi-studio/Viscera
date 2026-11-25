@@ -1,12 +1,12 @@
 # ADR-003: No-throw error handling in logging calls {#adr_log_003}
 
-| Field        | Value                                                                      |
-|--------------|----------------------------------------------------------------------------|
-| **Status**   | Accepted                                                                   |
-| **Date**     | 2026-11-18                                                                 |
-| **Deciders** | Cas Rovers                                                                 |
-| **Module**   | `logging` (`viscera::logging`)                                             |
-| **Related**  | Depends on: ADR-001, ADR-002, ADR-010, ADR-011, ADR-014 · Supersedes: none |
+| Field        | Value                                                                                                                                                       |
+|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Status**   | Accepted                                                                                                                                                    |
+| **Date**     | 2026-11-18                                                                                                                                                  |
+| **Deciders** | Cas Rovers                                                                                                                                                  |
+| **Module**   | `logging` (`viscera::logging`)                                                                                                                              |
+| **Related**  | Depends on: ADR-001, ADR-002, ADR-010, ADR-011, ADR-014 · Supersedes: none · See also: [engine/error ADR-005](../../error/adr/ADR-005-logging-ownership.md) |
 
 ## Context
 
@@ -135,5 +135,6 @@ Integration can be added later as an optional hook on top of the counters, witho
 
 ### Revisit when
 
-The engine's general error handling is designed and a clear, dependency-free way to report logger failures through it is
-wanted, or lost messages turn out to matter enough that callers need a way to react.
+Lost messages turn out to matter enough that callers need a way to react. The engine-wide error design now exists
+([engine/error ADR-005](../../error/adr/ADR-005-logging-ownership.md)). Logger failures stay on the counters in this
+ADR: logging does not return `Result` and does not depend on `viscera/error`.

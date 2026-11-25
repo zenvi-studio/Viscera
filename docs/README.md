@@ -12,6 +12,7 @@ guides in one place. Nested paths under `engine/` (and later `game/`) group feat
 |--------------------------------------|-----------------------------------------------------------------------------------|
 | [`foundation/`](foundation/)         | Cross-cutting decisions and guides: language, toolchain, CMake, how we write code |
 | [`engine/logging/`](engine/logging/) | Engine **logging** subsystem — architecture, API, queues, sinks, shutdown         |
+| [`engine/error/`](engine/error/)     | Engine **error handling** — `Error`, `Result`, panic, and boundary translation    |
 | `engine/` *(other features)*         | Additional runtime features as they gain ADRs (rendering, input, assets, …)       |
 | `game/` *(planned)*                  | Gameplay, content, and game-only concerns                                         |
 | [`templates/`](templates/)           | Shared authoring templates (e.g. ADR skeleton)                                    |
@@ -20,6 +21,7 @@ guides in one place. Nested paths under `engine/` (and later `game/`) group feat
 
 - \subpage foundation_index "Foundation"
 - \subpage engine_logging_index "Engine: Logging"
+- \subpage engine_error_index "Engine: Error handling"
 
 ## Architecture decision records (ADRs)
 
@@ -29,8 +31,8 @@ for feature modules where useful.
 - **Location:** `docs/<module>/adr/`, or nested such as `docs/engine/<feature>/adr/`
 - **Naming:** `ADR-NNN-short-title.md` (three-digit index, kebab-case slug)
 - **Numbering:** **Per module** — each folder owns its own `ADR-001`, `ADR-002`, … sequence. Foundation decisions stay
-  under `foundation/adr/`; logging decisions stay under `engine/logging/adr/`. When adding a decision, use the next free
-  number in that folder only.
+  under `foundation/adr/`; logging decisions stay under `engine/logging/adr/`; error-handling decisions stay under
+  `engine/error/adr/`. When adding a decision, use the next free number in that folder only.
 - **Status values:** Proposed → Accepted → Deprecated / Superseded (link to the replacing ADR)
 
 ### Template
@@ -48,6 +50,11 @@ Summaries and links: [foundation/README.md](foundation/README.md#adrs). Current 
 
 Summaries and links: [engine/logging/README.md](engine/logging/README.md#adrs). Current set: **ADR-001** through
 **ADR-016** (accepted; async architecture through testing and benchmarking).
+
+### Engine — error handling ADRs
+
+Summaries and links: [engine/error/README.md](engine/error/README.md#adrs). Current set: **ADR-001** through **ADR-008**
+(accepted; error model through testing and the `<expected>` baseline). Next error-module index: **ADR-009**.
 
 ## Guides
 
@@ -76,6 +83,19 @@ Engine — logging:
   backend format/write flow
 - [`engine/logging/diagrams/logger-sequence.puml`](engine/logging/diagrams/logger-sequence.puml) — Call site to sinks as
   a sequence (enqueue, then backend format/write)
+
+Engine — error handling:
+
+- [`engine/error/diagrams/error-classes.puml`](engine/error/diagrams/error-classes.puml) — `Error`, codes, context node,
+  and `Result`
+- [`engine/error/diagrams/error-dependencies.puml`](engine/error/diagrams/error-dependencies.puml) — Allowed includes
+  and
+  the edges that stay absent
+- [`engine/error/diagrams/failure-handling-flow.puml`](engine/error/diagrams/failure-handling-flow.puml) — Which
+  mechanism
+  to use, and which layer logs
+- [`engine/error/diagrams/propagation-sequence.puml`](engine/error/diagrams/propagation-sequence.puml) — One log at the
+  handler; panic stays off the logger
 
 ## Licence
 

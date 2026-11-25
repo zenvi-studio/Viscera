@@ -152,9 +152,18 @@ struct fmt::formatter<ThrowOnFormat>
 {
     static constexpr auto parse(const format_parse_context &ctx) { return ctx.begin(); }
 
-    [[noreturn]] static format_context::iterator format(const ThrowOnFormat &, format_context &)
+    static auto format(const ThrowOnFormat &, format_context &ctx) -> format_context::iterator
     {
-        throw std::runtime_error("formatter boom");
+        // A volatile read keeps the throw from looking unconditional. An
+        // unconditional throw makes MSVC treat this formatter as noreturn and
+        // then reject fmt's format_custom as unreachable (C4702).
+        const volatile int gate = 1;
+        if (gate != 0)
+        {
+            throw std::runtime_error("formatter boom");
+        }
+
+        return ctx.out();
     }
 };
 
@@ -411,7 +420,16 @@ TEST_F(LoggerTest, ThrowingFormatterWritesDiagnosticAndContinues)
 TEST_F(LoggerTest, FatalPathsAttemptDirectConsoleWrite)
 {
     shutdown();
+    #ifdef _MSC_VER
+    std::FILE *opened = nullptr;
+    if (tmpfile_s(&opened) != 0)
+    {
+        opened = nullptr;
+    }
+    const std::unique_ptr<std::FILE, int (*)(std::FILE *)> file{opened, &std::fclose};
+    #else
     const std::unique_ptr<std::FILE, int (*)(std::FILE *)> file{std::tmpfile(), &std::fclose};
+    #endif
     ASSERT_NE(file.get(), nullptr);
     auto console = std::make_unique<ConsoleSink>(file.get(), [](std::FILE *) { return false; });
     auto memory = std::make_unique<MemorySink>();

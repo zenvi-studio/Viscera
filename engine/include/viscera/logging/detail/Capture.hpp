@@ -275,6 +275,7 @@ namespace viscera::logging::detail
         std::size_t & offset,
 
 
+
     const T *const value
     )
     noexcept
@@ -749,34 +750,37 @@ namespace viscera::logging::detail
             commitLogSlot(&formatThunk<Args ...>, nullptr);
             return;
         }
-
-        if (!measureArgs(args ...))
+        else
         {
-            countArgumentBudget();
-            return;
-        }
-
-        Record *const record = takeSlot();
-        if (record == nullptr)
-        {
-            return;
-        }
-
-        if (!storeArgs(record->payload.data(), std::forward<Args>(args) ...))
-        {
-            if constexpr (!(std::is_trivially_destructible_v < typename ArgTraits<Args>::Stored > && ...))
+            if (!measureArgs(args ...))
             {
-                std::size_t destroyOffset = 0;
-                destroyPack<Args ...>(record->payload.data(), destroyOffset);
+                countArgumentBudget();
+                return;
             }
 
-            countArgumentBudget();
-            abortLogSlot();
-            return;
+            Record *const record = takeSlot();
+            if (record == nullptr)
+            {
+                return;
+            }
+
+            if (!storeArgs(record->payload.data(), std::forward<Args>(args) ...))
+            {
+                if constexpr (!(std::is_trivially_destructible_v < typename ArgTraits<Args>::Stored > && ...))
+                {
+                    std::size_t destroyOffset = 0;
+                    destroyPack<Args ...>(record->payload.data(), destroyOffset);
+                }
+
+                countArgumentBudget();
+                abortLogSlot();
+                return;
+            }
+
+            constexpr bool kTrivialDestroy = (std::is_trivially_destructible_v < typename ArgTraits<Args>::Stored > &&
+            ...);
+
+            commitLogSlot(&formatThunk<Args ...>, kTrivialDestroy ? nullptr : &destroyThunk<Args ...>);
         }
-
-        constexpr bool kTrivialDestroy = (std::is_trivially_destructible_v < typename ArgTraits<Args>::Stored > && ...);
-
-        commitLogSlot(&formatThunk<Args ...>, kTrivialDestroy ? nullptr : &destroyThunk<Args ...>);
     }
 } // namespace viscera::logging::detail

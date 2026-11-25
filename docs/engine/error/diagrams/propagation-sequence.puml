@@ -1,0 +1,62 @@
+@startuml propagation-sequence
+title Future subsystem scenario — one log at the handler, panic stays off the logger
+
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "main" as Main
+participant "level" as Level
+participant "asset" as Asset
+participant "io" as Io
+participant "render" as Render
+participant "logging" as Log
+
+note over Main
+  Illustrative. io, asset, render, and level
+  are not in the tree yet. The rules are
+  ADR-005 and ADR-007.
+end note
+
+== Recoverable NotFound — the level handles it ==
+
+Main -> Level : loadWall("missing.png")
+Level -> Asset : loadTexture("missing.png")
+Asset -> Io : readFile("assets/missing.png")
+Io --> Asset : unexpected NotFound\nmessage holds errno\nno log
+Asset --> Level : unexpected wrap(Asset NotFound)\nno log
+Level -> Log : warning(Category::Asset,\n"using placeholder: {}", error)
+note right of Log
+  One record. The formatter renders
+  the asset frame and the io cause.
+end note
+Level --> Main : success, placeholder texture
+
+== Unrecoverable environment failure — main handles it ==
+
+Main -> Level : loadWall("present.png")
+Level -> Asset : loadTexture("present.png")
+Asset --> Level : texture
+Level -> Render : upload(texture)
+Render --> Level : unexpected DeviceLost\nnative code in the message\nno log
+Level --> Main : unexpected withContext("uploading wall")\nno log
+Main -> Log : fatal(Category::Core,\n"level load failed: {}", error)
+Main -> Log : flush()
+Main -> Main : shut down initialized systems
+Main --> Main : return non-zero
+
+== Panic — logger is not a participant ==
+
+participant "caller" as Caller
+participant "panic" as Panic
+participant "stderr" as Err
+
+Caller -> Panic : invariant or bad_alloc
+Panic -> Panic : format into a 1024-byte stack buffer\nor a fixed literal if formatting throws
+Panic -> Err : descriptor write
+Panic -> Panic : abort()
+note over Log
+  panic() does not call logging,\nflush, or a running-state query.
+  This still holds when initialize()\nhas never been called.
+end note
+
+@enduml

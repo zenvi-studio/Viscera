@@ -1,0 +1,58 @@
+@startuml error-dependencies
+title Who may depend on the error module
+
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+
+package "game/" as game {
+  [VisceraGame] as Game
+}
+
+package "engine subsystems\n(when they exist)" as subs {
+  [io / asset / render /\naudio / input / platform] as Sub
+}
+
+package "viscera" as viscera {
+  package "error" as error {
+    [error.hpp and public headers] as ErrH
+    [Panic.cpp] as Panic
+  }
+
+  package "core" as core {
+    [FormatString.hpp] as Fmt
+  }
+
+  package "logging" as logging {
+    [logging public headers] as LogH
+    [logging/FormatString.hpp\nforwarding alias] as LogFwd
+  }
+}
+
+package "standard library and {fmt}" as stdlib {
+  [std + fmt] as Std
+}
+
+Game --> Sub : calls
+Sub --> ErrH : include\nResult / Error / subsystem enum
+ErrH --> Fmt : format strings\nand call-site capture
+ErrH --> Std
+Fmt --> Std
+LogH --> LogFwd
+LogFwd --> Fmt : alias only
+Panic --> Std : descriptor write\nto stderr, then abort
+
+note as Forbidden
+  Forbidden edges
+  --
+  logging headers and Logger.cpp do not include viscera/error.
+  error public headers do not include viscera/logging.
+  Panic.cpp does not include viscera/logging.
+  FormatString.hpp does not include logging or error.
+  engine headers do not include game/.
+  A subsystem may include another subsystem's
+  error-enum header. It does not include that
+  subsystem's implementation to read a code.
+end note
+
+@enduml

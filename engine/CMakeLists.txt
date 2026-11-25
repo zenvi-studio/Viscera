@@ -31,6 +31,31 @@ endif ()
 
 option(VISCERA_LOGGING_BENCHMARKS "Build logging microbenchmarks" OFF)
 
+# ADR-008: std::expected must be real on this compiler and standard library
+# before error headers depend on it. Monadic operations are not required.
+try_run(
+        VISCERA_EXPECTED_RUN_RESULT
+        VISCERA_EXPECTED_COMPILE_RESULT
+        "${CMAKE_CURRENT_BINARY_DIR}/expected-baseline"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/expected_baseline.cpp"
+        CMAKE_FLAGS
+        "-DCMAKE_CXX_STANDARD=23"
+        "-DCMAKE_CXX_STANDARD_REQUIRED=ON"
+        "-DCMAKE_CXX_EXTENSIONS=OFF"
+        COMPILE_OUTPUT_VARIABLE VISCERA_EXPECTED_COMPILE_OUTPUT
+        RUN_OUTPUT_VARIABLE VISCERA_EXPECTED_RUN_OUTPUT
+)
+if (NOT VISCERA_EXPECTED_COMPILE_RESULT)
+    message(FATAL_ERROR
+            "std::expected baseline failed to compile:\n${VISCERA_EXPECTED_COMPILE_OUTPUT}")
+endif ()
+if (NOT VISCERA_EXPECTED_RUN_RESULT EQUAL 0)
+    message(FATAL_ERROR
+            "std::expected baseline failed to run (${VISCERA_EXPECTED_RUN_RESULT}):\n${VISCERA_EXPECTED_RUN_OUTPUT}")
+endif ()
+string(STRIP "${VISCERA_EXPECTED_RUN_OUTPUT}" VISCERA_EXPECTED_RUN_OUTPUT)
+message(STATUS "std::expected baseline: ${VISCERA_EXPECTED_RUN_OUTPUT}")
+
 add_library(VisceraEngine
         src/Engine.cpp
         src/logging/Logger.cpp
@@ -39,6 +64,8 @@ add_library(VisceraEngine
         src/logging/ConsoleSink.cpp
         src/logging/FileSink.cpp
         src/logging/MemorySink.cpp
+        src/error/Error.cpp
+        src/error/Panic.cpp
 )
 
 if (VISCERA_LOG_DEBUG_SINKS)
@@ -90,7 +117,8 @@ target_compile_features(VisceraEngine
 
 set_target_properties(VisceraEngine PROPERTIES FOLDER "Engine")
 
-#target_compile_definitions(VisceraEngine PUBLIC $<$<CONFIG:Debug>:VISCERA_ENABLE_ASSERTS>)
+target_compile_definitions(VisceraEngine PUBLIC
+        $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:VISCERA_ENABLE_ASSERTS>)
 
 find_package(Threads REQUIRED)
 

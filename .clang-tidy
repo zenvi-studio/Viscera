@@ -68,7 +68,7 @@ CheckOptions:
     -   key: bugprone-narrowing-conversions.WarnOnFloatingPointNarrowingConversion
         value: 'false'
     -   key: performance-enum-size.EnumIgnoreList
-        value: 'viscera::logging::Category'
+        value: 'viscera::logging::Category;viscera::ErrorDomain;viscera::error_tests::SampleError'
 
     # ====[ Naming conventions ]====
     -   key: readability-identifier-naming.NamespaceCase

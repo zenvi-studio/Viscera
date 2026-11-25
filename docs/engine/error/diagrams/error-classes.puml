@@ -1,0 +1,90 @@
+@startuml error-classes
+title viscera — error types
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+hide circle
+hide empty members
+
+package "viscera" as api {
+  enum ErrorDomain {
+    Core
+  }
+
+  class ErrorCode <<value>> {
+    +domain: ErrorDomain
+    +value: uint16
+    +operator==(ErrorCode, ErrorCode)
+  }
+
+  class Error {
+    +Error(code, where = current())
+    +Error(code, format, args...)
+    +withContext(format, args...): Error
+    +wrap(newCode, format, args...): Error
+    +code(): ErrorCode
+    +description(): string_view
+    +is(code): bool
+    +message(): string_view
+    +location(): source_location
+    +cause(): const Error*
+    --
+    -m_code: ErrorCode
+    -m_description: string_view
+    -m_location: source_location
+    -m_node: shared_ptr~const Node~
+  }
+
+  class "Result~T~" as Result <<alias>> {
+    std::expected~T, Error~
+  }
+
+  class "fmt::formatter~Error~" as Formatter {
+    +parse(context)
+    +format(error, context)
+    --
+    does not mutate
+    no temporary std::string
+    {fmt} exceptions become a fallback
+    at most kMaxErrorFormatFrames (8)
+  }
+
+  class "fail(...)" as Fail <<function>> {
+    +fail(code, where = current()): unexpected~Error~
+    +fail(code, format, args...): unexpected~Error~
+  }
+}
+
+package "viscera::detail" as detail {
+  class Node <<immutable>> {
+    +message: string
+    +cause: Error
+  }
+}
+
+ErrorCode --> ErrorDomain
+Error *-- ErrorCode
+Error o-- Node : null when code-only
+Node --> Error : cause
+Result --> Error : unexpected alternative
+Formatter ..> Error
+Fail ..> Error : builds
+
+note bottom of Error
+  is() compares the top-level ErrorCode only.
+  location() is this frame and is always present.
+  The rendered line's parenthetical location is the
+  root origin, unless formatting hit the 8-frame cap.
+  A code-only Error does not allocate.
+end note
+
+note bottom of ErrorDomain
+  v1 enumerator: Core.
+  Platform, Io, Asset, Render, Audio,
+  Input, and Game are reserved names.
+  They are not enumerators until that
+  owner's first error enum is added.
+end note
+
+@enduml

@@ -1,0 +1,53 @@
+@startuml failure-handling-flow
+title Choosing a failure mechanism
+
+skinparam shadowing false
+skinparam activityDiamondFontSize 11
+skinparam noteFontSize 11
+
+start
+
+:A call can fail;
+
+if (Is this a normal, frequent outcome?\ncache miss, empty queue, not ready) then (yes)
+  :Return std::optional\nor a status enum;
+  stop
+endif
+
+if (Is the program wrong?\nimpossible state, broken invariant) then (yes)
+  :VISCERA_ASSERT in Debug and RelWithDebInfo,\nor VISCERA_PANIC in every config;
+  :panic() writes a 1024-byte stack buffer,\nwrites stderr, and aborts;
+  note right
+    Does not call the logger.
+    Does not flush.
+    Does not unwind.
+  end note
+  stop
+endif
+
+if (Did allocation fail,\nor can an Error not be built?) then (yes)
+  :panic() as above;
+  stop
+endif
+
+:Return a Result failure.\nNew errors carry a code, a static description, and an origin.\nwithContext or wrap only when this layer has something to add.\nbad_alloc while attaching a frame calls panic().\nDo not log.;
+
+if (Can this layer decide the outcome?\nrecover, show the user, discard, or stop the process) then (yes)
+  if (Can the process continue?) then (yes)
+    :Log once.\nHandler chooses level and category.\nRecover, or log Debug if discarding.;
+    stop
+  else (no)
+    :This is main, or the same top-level handler.\nLog once at Fatal.\nflush, shut down in order,\nreturn non-zero.;
+    note right
+      Fatal does not abort.
+      Subsystems do not call panic()
+      for an environment failure.
+    end note
+    stop
+  endif
+else (no)
+  :return std::unexpected(std::move(result).error())\nwith optional withContext or wrap.\nDo not log.;
+  stop
+endif
+
+@enduml

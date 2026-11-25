@@ -11,4 +11,5 @@ missingIncludeSystem
 unmatchedSuppression
 
 # Implicit conversion from string literals is the logging API (same as fmt::format_string).
+noExplicitConstructor:engine/include/viscera/core/FormatString.hpp
 noExplicitConstructor:engine/include/viscera/logging/FormatString.hpp
